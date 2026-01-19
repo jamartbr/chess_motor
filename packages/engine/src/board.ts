@@ -21,6 +21,8 @@ export class Board {
         const index = this.getIndex(rank, file);
         this.grid[index] = { type, color };
     }
+
+    public turn: Color = Color.White;
     
     private castlingRights: CastlingRights = {
         whiteQueenSide: true,
@@ -30,9 +32,10 @@ export class Board {
     };
 
     private enPassantSquare: number | null = null;
+    private promotionSquare: number | null = null;
 
     // The "Stack" to store historical state
-    private stateStack: { rights: CastlingRights, enPassant: number | null }[] = [];
+    private stateStack: { rights: CastlingRights, enPassant: number | null, promotion: number | null }[] = [];
 
     public resetBoard(): void {
         this.grid.fill(null);
@@ -244,8 +247,6 @@ export class Board {
                 }
             }
         }
-
-        // TODO: en passant logic
         
         return legalSquares;
     }
@@ -296,11 +297,12 @@ export class Board {
         checkRook(to);
     }
 
-    public makeMove(from: number, to: number): Piece | null {
+    public makeMove(from: number, to: number, promotionType: PieceType = PieceType.Queen): Piece | null {
         // Save current state to the stack
         this.stateStack.push({ 
             rights: { ...this.castlingRights }, 
-            enPassant: this.enPassantSquare 
+            enPassant: this.enPassantSquare,
+            promotion: this.promotionSquare 
         });
 
         const piece = this.grid[from];
@@ -334,15 +336,37 @@ export class Board {
             this.enPassantSquare = (from + to) / 2; // The square in the middle
         }
 
+        // Update promotion square
+        const rank = to >> 4;
+        this.promotionSquare = null; // Reset by default
+        if (piece?.type === PieceType.Pawn && (rank === 0 || rank === 7)) {
+            piece.type = promotionType;
+            this.promotionSquare = to;
+        }
+
         // Update castling rights
         this.updateCastlingRights(from, to, piece);
+
+        // Update turn
+        this.turn = this.turn === Color.White ? Color.Black : Color.White;
 
         return captured;
     }
 
     public undoMove(from: number, to: number, captured: Piece | null): void {
         const state = this.stateStack.pop();
-        const piece = this.grid[to];
+        if (state) {
+            this.enPassantSquare = state.enPassant;
+            this.castlingRights = { ...state.rights };
+            this.promotionSquare = state.promotion;
+        }
+
+        let piece = this.grid[to];
+
+        // Revert promotion
+        if (piece && to === state?.promotion) {
+            piece.type = PieceType.Pawn;
+        }
 
         // Restore pieces
         this.grid[from] = piece;
@@ -364,6 +388,9 @@ export class Board {
         } else {
             this.grid[to] = captured; // Standard restoration
         }
+
+        // Restore turn
+        this.turn = this.turn === Color.White ? Color.Black : Color.White;
     }
 
     /**

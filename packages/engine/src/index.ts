@@ -1,1 +1,2 @@
-console.log("Chess Motor Engine Initialized");
+export { Board } from './board';
+export * from './types';
