@@ -6,12 +6,12 @@
     import { SOUNDS } from '../assets/sounds';
 
     const game = shallowRef(new Board());
-    const selectedSquare = ref<number | null>(null);
     const moveKey = ref(0); // Contador de movimientos
-
+    const selectedSquare = ref<number | null>(null);
     const lastMove = ref<{ from: number; to: number } | null>(null);
-
-    const pendingPromotion = ref<{ from: number, to: number } | null>(null);
+    const pendingPromotion = ref<{ from: number, to: number, color: Color } | null>(null);
+    const isFinished = ref(false);
+    const winner = ref<Color | 'Draw' | null>(null);
 
     // Generamos los índices de forma que la fila 7 (negras) esté arriba 
     // y la fila 0 (blancas) esté abajo.
@@ -49,17 +49,27 @@
             // 2. Execute the move in the engine
             game.value.makeMove(from, to, promotion);
 
-            // 3. Identify who just moved and who is now under attack
+            // 3. Update the acumulative score for the variant rules
+            game.value.updateControlPoints();
+
+            // 4. Check for game over
+            if (game.value.isGameOver()) {
+                isFinished.value = true;
+                winner.value = game.value.getDominionWinner();
+                // playSound(SOUNDS.GAME_END); // Add this to your sounds if you have it
+            }
+
+            // 5. Identify who just moved and who is now under attack
             const activeColor = game.value.turn; 
             const opponentColor = activeColor === Color.White ? Color.Black : Color.White;
 
-            // 4. Find the king of the player whose turn it is now
+            // 6. Find the king of the player whose turn it is now
             const kingIndex = game.value.findKing(activeColor);
             
-            // 5. Check if that king is attacked by the player who just moved
+            // 7. Check if that king is attacked by the player who just moved
             const isCheck = game.value.isSquareAttacked(kingIndex, opponentColor);
 
-            // 6. Play the appropriate sound
+            // 8. Play the appropriate sound
             if (isCheck) {
                 playSound(SOUNDS.CHECK);
             } else if (isCapture) {
@@ -68,7 +78,7 @@
                 playSound(SOUNDS.MOVE);
             }
 
-            // 7. Update UI state
+            // 9. Update UI state
             moveKey.value++;
             triggerRef(game);
             lastMove.value = { from, to };
@@ -119,9 +129,28 @@
         // Ensure we don't block the UI if audio fails
         audio.play().catch(err => console.warn("Audio playback blocked:", err));
     };
+
+    const resetGame = () => {
+        // 1. Create a fresh instance of the Board
+        game.value = new Board();
+        
+        // 2. Reset UI state variables
+        selectedSquare.value = null;
+        lastMove.value = null;
+        pendingPromotion.value = null;
+        isFinished.value = false;
+        winner.value = null;
+        
+        // 3. Force a re-render of the board component
+        moveKey.value++;
+        triggerRef(game);
+
+        // 4. Optional: Play game start sound
+        // playSound(SOUNDS.GAME_START); 
+    };
 </script>
 
-<template>
+<!-- <template>
     <div class="relative">
         <div :key="moveKey" class="grid grid-cols-8 aspect-square w-[560px] border-[12px] border-slate-700 bg-slate-800">
             <Square 
@@ -131,6 +160,7 @@
                 :piece="game.getPieceAt(index)"
                 :is-selected="selectedSquare === index"
                 :is-last-move="lastMove?.from === index || lastMove?.to === index"
+                :control="game.getSquareControl(index)"
                 @click="onSquareClick(index)" 
                 @move="handleMove"
             />
@@ -142,6 +172,95 @@
                     @select="(type) => executeMove(pendingPromotion!.from, pendingPromotion!.to, type)"
                 />
             </div>
+        </div>
+    </div>
+</template> -->
+
+<template>
+    <div class="flex flex-col md:flex-row gap-8 items-start justify-center p-8 bg-slate-900 min-h-screen">
+        
+        <div class="relative">
+            <div :key="moveKey" class="grid grid-cols-8 aspect-square w-[560px] border-[12px] border-slate-700 bg-slate-800 shadow-2xl">
+                <Square 
+                    v-for="index in boardIndices" 
+                    :key="index"
+                    :index="index"
+                    :piece="game.getPieceAt(index)"
+                    :is-selected="selectedSquare === index"
+                    :is-last-move="lastMove?.from === index || lastMove?.to === index"
+                    :control="game.getSquareControl(index)"
+                    :current-turn="game.turn"
+                    @click="onSquareClick(index)" 
+                    @move="handleMove"
+                />
+
+                <div v-if="pendingPromotion" class="absolute inset-0 z-[100] bg-black/10">
+                    <PromotionSelector 
+                        :color="pendingPromotion.color"
+                        :style="getPromotionStyle(pendingPromotion.to)"
+                        @select="(type) => executeMove(pendingPromotion!.from, pendingPromotion!.to, type)"
+                    />
+                </div>
+            </div>
+        </div>
+
+        <div class="w-64 flex flex-col gap-4">
+            <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-xl">
+                <h2 class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-4">Dominion Points</h2>
+                
+                <div class="flex flex-col gap-6">
+                    <div class="flex justify-between items-end">
+                        <span class="text-white font-medium">White</span>
+                        <span class="text-3xl font-mono font-bold text-white">{{ game.whiteControlPoints }}</span>
+                    </div>
+                    
+                    <div class="h-2 w-full bg-slate-700 rounded-full overflow-hidden flex">
+                        <div 
+                            class="h-full bg-blue-500 transition-all duration-500" 
+                            :style="{ width: `${(game.whiteControlPoints / (game.whiteControlPoints + game.blackControlPoints || 1)) * 100}%` }">
+                        </div>
+                        <div class="h-full bg-red-500 flex-grow"></div>
+                    </div>
+
+                    <div class="flex justify-between items-end">
+                        <span class="text-slate-400 font-medium">Black</span>
+                        <span class="text-3xl font-mono font-bold text-slate-300">{{ game.blackControlPoints }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 text-center">
+                <span class="text-slate-400 text-sm italic">
+                    {{ game.turn === Color.White ? "White's turn" : "Black's turn" }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div v-if="isFinished" class="absolute inset-0 z-[200] flex items-center justify-center bg-slate-900/80 backdrop-blur-sm transition-all animate-in fade-in duration-500">
+        <div class="bg-slate-800 p-10 rounded-2xl border-2 border-slate-600 shadow-[0_0_50px_rgba(0,0,0,0.5)] text-center flex flex-col items-center gap-6">
+            <h2 class="text-4xl font-black text-white uppercase tracking-tighter">
+                {{ winner === 'Draw' ? "It's a Draw!" : (winner === Color.White ? 'White Victory' : 'Black Victory') }}
+            </h2>
+            
+            <div class="flex gap-8 items-center bg-slate-900/50 p-6 rounded-xl border border-slate-700">
+                <div class="text-center">
+                    <p class="text-[10px] text-slate-500 uppercase font-bold">Final White</p>
+                    <p class="text-3xl font-mono font-bold text-blue-400">{{ game.whiteControlPoints }}</p>
+                </div>
+                <div class="text-xl text-slate-600 italic">vs</div>
+                <div class="text-center">
+                    <p class="text-[10px] text-slate-500 uppercase font-bold">Final Black</p>
+                    <p class="text-3xl font-mono font-bold text-red-400">{{ game.blackControlPoints }}</p>
+                </div>
+            </div>
+
+            <button 
+                @click="resetGame" 
+                class="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg transition-all transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-blue-500/40"
+            >
+                PLAY AGAIN
+            </button>
         </div>
     </div>
 </template>

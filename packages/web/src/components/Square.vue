@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import Piece from './Piece.vue';
+import { Color } from '@chess-motor/engine';
 
 const props = defineProps<{
     index: number;
     piece: any;
     isSelected: boolean;
     isLastMove: boolean;
+    control: Color | null;
+    currentTurn: Color;
 }>();
 
 const emit = defineEmits(['click', 'move']);
@@ -37,34 +40,52 @@ const onDrop = (e: DragEvent) => {
 
 <template>
     <div 
-        class="relative w-[65px] h-[65px] flex items-center justify-center transition-colors duration-200"
+        class="relative w-[65px] h-[65px] flex items-center justify-center transition-all duration-300"
         :class="[
             isLight ? 'bg-[#ebecd0]' : 'bg-[#779556]',
             isSelected ? 'bg-yellow-400/80' : '',
-            isLastMove ? 'bg-yellow-200/40' : ''
+            isLastMove ? 'bg-yellow-200/40' : '',
+            
+            /* Logic for the Square Background Glow */
+            control === Color.White ? 'shadow-[inset_0_0_20px_rgba(59,130,246,0.4)]' : '',
+            control === Color.Black ? 'shadow-[inset_0_0_20px_rgba(239,68,68,0.4)]' : ''
         ]"
         @dragover="onDragOver"
         @drop="onDrop"
         @click.stop="emit('click')"
     >
+        <div 
+            v-if="control !== null"
+            class="absolute inset-0 pointer-events-none transition-opacity duration-500"
+            :class="[
+                control === Color.White ? 'bg-blue-500/[0.08]' : 'bg-red-500/[0.08]'
+            ]"
+        ></div>
 
         <span v-if="(index & 7) === 0" 
-            class="absolute left-0.5 top-0.5 text-[10px] font-bold select-none"
+            class="absolute left-0.5 top-0.5 text-[10px] font-bold select-none z-10"
             :class="isLight ? 'text-[#779556]' : 'text-[#ebecd0]'">
             {{ coordinateName.rank }}
         </span>
 
         <span v-if="(index >> 4) === 0" 
-            class="absolute right-0.5 bottom-0.5 text-[10px] font-bold select-none"
+            class="absolute right-0.5 bottom-0.5 text-[10px] font-bold select-none z-10"
             :class="isLight ? 'text-[#779556]' : 'text-[#ebecd0]'">
             {{ coordinateName.file }}
         </span>
         
-        <Piece 
-            v-if="piece" 
-            :type="piece.type" 
-            :color="piece.color" 
-            :index="index" 
-        />
+        <div 
+            class="absolute inset-0 z-30 flex items-center justify-center pointer-events-none"
+        >
+            <Piece 
+                v-if="piece" 
+                :type="piece.type" 
+                :color="piece.color" 
+                :index="index" 
+                :current-turn="currentTurn" 
+                @click="$emit('click')" 
+                class="pointer-events-auto"
+            />
+        </div>
     </div>
 </template>

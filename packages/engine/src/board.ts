@@ -23,6 +23,8 @@ export class Board {
     }
 
     public turn: Color = Color.White;
+    public whiteControlPoints: number = 0;
+    public blackControlPoints: number = 0;
     
     private castlingRights: CastlingRights = {
         whiteQueenSide: true,
@@ -39,6 +41,16 @@ export class Board {
 
     public resetBoard(): void {
         this.grid.fill(null);
+
+        this.whiteControlPoints = 0;
+        this.blackControlPoints = 0;
+        this.turn = Color.White;
+        this.castlingRights = {
+            whiteQueenSide: true,
+            whiteKingSide: true,
+            blackQueenSide: true,
+            blackKingSide: true
+        };
 
         const pieces: PieceType[] = [
             PieceType.Rook, PieceType.Knight, PieceType.Bishop, PieceType.Queen,
@@ -111,7 +123,6 @@ export class Board {
 
     public getSlidingMoves(index: number, offsets: number[]): number[] {
         const piece = this.getPieceAt(index);
-        if (!piece) return [];
 
         const legalSquares: number[] = [];
 
@@ -121,7 +132,7 @@ export class Board {
 
             const lastSquare = ray[ray.length - 1];
             const lastPiece = this.getPieceAt(lastSquare);
-            if (lastPiece && lastPiece.color === piece.color) ray.pop();
+            if (piece && lastPiece && lastPiece.color === piece.color) ray.pop();
 
             legalSquares.push(...ray);
         }
@@ -340,6 +351,7 @@ export class Board {
         const rank = to >> 4;
         this.promotionSquare = null; // Reset by default
         if (piece?.type === PieceType.Pawn && (rank === 0 || rank === 7)) {
+            console.log("promotion")
             piece.type = promotionType;
             this.promotionSquare = to;
         }
@@ -355,41 +367,42 @@ export class Board {
 
     public undoMove(from: number, to: number, captured: Piece | null): void {
         const state = this.stateStack.pop();
-        if (state) {
-            this.enPassantSquare = state.enPassant;
-            this.castlingRights = { ...state.rights };
-            this.promotionSquare = state.promotion;
-        }
+        if (!state) return; // Guard clause
 
         let piece = this.grid[to];
 
-        // Revert promotion
-        if (piece && to === state?.promotion) {
+        // 1. Revert promotion if it happened
+        if (piece && to === this.promotionSquare) {
+            console.log("undoing promotion")
             piece.type = PieceType.Pawn;
         }
 
-        // Restore pieces
+        // 2. Restore state flags
+        this.castlingRights = { ...state.rights };
+        this.promotionSquare = state.promotion;
+        this.enPassantSquare = state.enPassant;
+
+        // 3. Move the piece(s) back to origin
         this.grid[from] = piece;
         this.grid[to] = captured;
 
-        // Handle Rook if castling
+        // 4. Handle piece restoration when En Passant capture
+        if (piece?.type === PieceType.Pawn && to === state.enPassant) {
+            this.grid[to] = null; // Destination square must be empty
+            const capturedPawnIndex = piece.color === Color.White ? to - 16 : to + 16;
+            this.grid[capturedPawnIndex] = captured; // Put captured pawn back
+        }
+
+        // 5. Handle rook if it was a castling move
         if (piece?.type === PieceType.King && Math.abs(to - from) === 2) {
             const isKingSide = to > from;
             const rookFrom = isKingSide ? from + 3 : from - 4;
             const rookTo = isKingSide ? from + 1 : from - 1;
-            this.grid[rookFrom] = this.grid[rookTo];
-            this.grid[rookTo] = null;
+            this.grid[rookFrom] = this.grid[rookTo]; // Put Rook back in corner
+            this.grid[rookTo] = null;                // Clear castling square
         }
 
-        // Handle en passant
-        if (piece?.type === PieceType.Pawn && to === state?.enPassant) {
-            const capturedPawnIndex = piece.color === Color.White ? to - 16 : to + 16;
-            this.grid[capturedPawnIndex] = captured;
-        } else {
-            this.grid[to] = captured; // Standard restoration
-        }
-
-        // Restore turn
+        // 6. Restore turn
         this.turn = this.turn === Color.White ? Color.Black : Color.White;
     }
 
@@ -409,25 +422,33 @@ export class Board {
             }
         }
 
-        // 2. Check diagonally
-        // No need to check color, getSlidingMoves removes same-color pieces
-        for (const square of this.getSlidingMoves(targetIndex, this.bishopOffsets)) {
-            const piece = this.getPieceAt(square);
-            if (piece && (piece.type === PieceType.Bishop || piece.type === PieceType.Queen 
-                || piece.type === PieceType.King))
-            return true;
+        /// 2. Check diagonally (Bishops/Queens)
+        for (const offset of this.bishopOffsets) {
+            let square = targetIndex + offset;
+            while (this.isSquareOnBoard(square)) {
+                const piece = this.getPieceAt(square);
+                if (piece) {
+                    if (piece.color === attackerColor && (piece.type === PieceType.Bishop || piece.type === PieceType.Queen)) return true;
+                    break; // Blocked by any piece
+                }
+                square += offset;
+            }
         }
 
-        // 3. Check horizontally
-        // No need to check color, getSlidingMoves removes same-color pieces
-        for (const square of this.getSlidingMoves(targetIndex, this.rookOffsets)) {
-            const piece = this.getPieceAt(square);
-            if (piece && (piece.type === PieceType.Rook || piece.type === PieceType.Queen
-                || piece.type === PieceType.King))
-            return true;
+        // 3. Check horizontally/vertically (Rooks/Queens)
+        for (const offset of this.rookOffsets) {
+            let square = targetIndex + offset;
+            while (this.isSquareOnBoard(square)) {
+                const piece = this.getPieceAt(square);
+                if (piece) {
+                    if (piece.color === attackerColor && (piece.type === PieceType.Rook || piece.type === PieceType.Queen)) return true;
+                    break; // Blocked by any piece
+                }
+                square += offset;
+            }
         }
 
-        // 4. Check for pawns (no en passant)
+        // 4. Check for pawns
         const pawnCaptureOffsets = attackerColor === Color.Black ? [15, 17] : [-15, -17];
         for (const offset of pawnCaptureOffsets) {
             const square = targetIndex + offset;
@@ -437,7 +458,14 @@ export class Board {
             }
         }
 
-        // TODO: en passant logic
+        // 5. Check for enemy king
+        for (const offset of [...this.bishopOffsets, ...this.rookOffsets]) {
+            const square = targetIndex + offset;
+            if (this.isSquareOnBoard(square)) {
+                const piece = this.getPieceAt(square);
+                if (piece && piece.type === PieceType.King && piece.color === attackerColor) return true;
+            }
+        }
 
         return false;
     }
@@ -475,5 +503,149 @@ export class Board {
             }
         }
         return -1;
+    }
+
+    /**
+     * Checks if the current player has any legal moves.
+     * If they don't, the game is over.
+     */
+    public isGameOver(): boolean {
+        for (let i = 0; i < 128; i++) {
+            if (this.isSquareOnBoard(i)) {
+                const piece = this.getPieceAt(i);
+                if (piece && piece.color === this.turn) {
+                    const moves = this.getLegalMoves(i);
+                    if (moves.length > 0) return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Determines the winner based on Dominion points.
+     */
+    public getDominionWinner(): Color | 'Draw' {
+        if (this.whiteControlPoints > this.blackControlPoints) return Color.White;
+        if (this.blackControlPoints > this.whiteControlPoints) return Color.Black;
+        return 'Draw';
+    }
+
+    /**
+     * Calculates the control for the entire board and updates points.
+     * Called at the end of every turn.
+     */
+    public updateControlPoints(): void {
+        let currentTurnWhiteControl = 0;
+        let currentTurnBlackControl = 0;
+
+        // Iterate through all 128 squares (0x88 board)
+        for (let i = 0; i < 128; i++) {
+            if ((i & 0x88) === 0) { // Valid square
+                const control = this.getSquareControl(i);
+                if (control === Color.White) currentTurnWhiteControl++;
+                else if (control === Color.Black) currentTurnBlackControl++;
+            }
+        }
+
+        this.whiteControlPoints += currentTurnWhiteControl;
+        this.blackControlPoints += currentTurnBlackControl;
+    }
+
+    /**
+     * Determines square control based on your rules:
+     * 1. Piece presence
+     * 2. Attack balance (more attackers than defenders)
+     */
+    public getSquareControl(index: number): Color | null {
+        const piece = this.grid[index];
+        
+        // Rule 1: If a piece is there, that player controls it
+        if (piece) return piece.color;
+
+        // Rule 2: Attack balance
+        // You likely already have a method to count attackers for move validation
+        const whiteAttackers = this.countAttackers(index, Color.White);
+        const blackAttackers = this.countAttackers(index, Color.Black);
+
+        if (whiteAttackers > blackAttackers) return Color.White;
+        if (blackAttackers > whiteAttackers) return Color.Black;
+
+        return null; // Neutral or contested equally
+    }
+
+    /**
+     * Counts how many pieces of a specific color attack a target square.
+     * This is essential for the "Dominion" control calculation.
+     * @param targetIndex The 0x88 index of the square to check
+     * @param attackerColor The color of the pieces we are looking for
+     */
+    public countAttackers(targetIndex: number, attackerColor: Color): number {
+        let count = 0;
+
+        // 1. Check for Knights
+        for (const offset of this.knightOffsets) {
+            const square = targetIndex + offset;
+            if (this.isSquareOnBoard(square)) {
+                const piece = this.getPieceAt(square);
+                if (piece && piece.type === PieceType.Knight && piece.color === attackerColor) {
+                    count++;
+                }
+            }
+        }
+
+        // 2. Check for Sliding Pieces (Bishops, Queens, Rooks)
+        // We use raw loops here instead of getSlidingMoves for maximum performance
+        const directions = [
+            { dir: 16, types: [PieceType.Rook, PieceType.Queen] },   // North
+            { dir: -16, types: [PieceType.Rook, PieceType.Queen] },  // South
+            { dir: 1, types: [PieceType.Rook, PieceType.Queen] },    // East
+            { dir: -1, types: [PieceType.Rook, PieceType.Queen] },   // West
+            { dir: 17, types: [PieceType.Bishop, PieceType.Queen] }, // NE
+            { dir: 15, types: [PieceType.Bishop, PieceType.Queen] }, // NW
+            { dir: -17, types: [PieceType.Bishop, PieceType.Queen] },// SW
+            { dir: -15, types: [PieceType.Bishop, PieceType.Queen] } // SE
+        ];
+
+        for (const { dir, types } of directions) {
+            let square = targetIndex + dir;
+            while (this.isSquareOnBoard(square)) {
+                const piece = this.getPieceAt(square);
+                if (piece) {
+                    if (piece.color === attackerColor && types.includes(piece.type)) {
+                        count++;
+                    }
+                    break; // Path is blocked by any piece
+                }
+                square += dir;
+            }
+        }
+
+        // 3. Check for Pawns
+        // If we want white attackers, we look "below" the square (indices 15, 17 away)
+        const pawnOffsets = attackerColor === Color.White ? [-17, -15] : [17, 15];
+        for (const offset of pawnOffsets) {
+            const square = targetIndex + offset;
+            if (this.isSquareOnBoard(square)) {
+                const piece = this.getPieceAt(square);
+                if (piece && piece.type === PieceType.Pawn && piece.color === attackerColor) {
+                    count++;
+                }
+            }
+        }
+
+        // 4. Check for King
+        const kingOffsets = [1, -1, 16, -16, 17, 15, -17, -15];
+        for (const offset of kingOffsets) {
+            const square = targetIndex + offset;
+            if (this.isSquareOnBoard(square)) {
+                const piece = this.getPieceAt(square);
+                if (piece && piece.type === PieceType.King && piece.color === attackerColor) {
+                    count++;
+                }
+            }
+        }
+
+        return count;
     }
 }

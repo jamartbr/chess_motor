@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { Board } from './board';
+import { Color, PieceType } from './types';
 
 describe('Board Initialization', () => {
     it('should have a White King on e1', () => {
@@ -96,5 +97,73 @@ describe('Pawn Moves', () => {
         (board as any).grid[0x20] = { type: 'p', color: 'b' };
         const moves = board.getValidMoves(0x10);
         expect(moves.length).toBe(0); // Blocked
+    });
+});
+
+describe('Dominion Chess Engine', () => {
+    let board: Board;
+
+    beforeEach(() => {
+        board = new Board();
+    });
+
+    it('should correctly identify the initial board state', () => {
+        const whitePawn = board.getPieceAt(0x10); // a2
+        expect(whitePawn?.type).toBe(PieceType.Pawn);
+        expect(whitePawn?.color).toBe(Color.White);
+    });
+
+    it('should handle white pawn two-step move and en passant target', () => {
+        // Move e2 to e4
+        board.makeMove(0x14, 0x34); 
+        // 0x24 is e3 (the square behind the pawn)
+        expect(board['enPassantSquare']).toBe(0x24); 
+    });
+
+    it('should NOT allow black pawns to promote on their starting rank', () => {
+        // Place a black pawn on rank 7 (its start)
+        // Manually manipulating grid for testing is a common engine test pattern
+        board['grid'][0x74] = { type: PieceType.Pawn, color: Color.Black };
+        
+        // Simulate a move that doesn't involve the pawn
+        board.makeMove(0x10, 0x20); 
+        
+        // Verify black pawn is still a pawn
+        expect(board.getPieceAt(0x74)?.type).toBe(PieceType.Pawn);
+    });
+
+    it('should correctly promote a white pawn on rank 7', () => {
+        // Place white pawn on rank 6
+        const from = 0x60; // a7
+        const to = 0x70;   // a8
+        board['grid'][from] = { type: PieceType.Pawn, color: Color.White };
+        
+        board.makeMove(from, to, PieceType.Queen);
+        
+        const piece = board.getPieceAt(to);
+        expect(piece?.type).toBe(PieceType.Queen);
+    });
+
+    it('should prevent castling if the king has moved', () => {
+        const whiteKingPos = 0x04; // e1
+        // Move king out and back
+        board.makeMove(whiteKingPos, 0x14);
+        board.makeMove(0x14, whiteKingPos);
+        
+        // Check rights
+        expect(board['castlingRights'].whiteKingSide).toBe(false);
+        expect(board['castlingRights'].whiteQueenSide).toBe(false);
+    });
+
+    it('should accumulate dominion points after each turn', () => {
+        // Initial control points should be 0
+        expect(board.whiteControlPoints).toBe(0);
+        
+        // Simulate a move
+        board.makeMove(0x14, 0x34); 
+        board.updateControlPoints();
+        
+        // White should now have points because they control more of the board
+        expect(board.whiteControlPoints).toBeGreaterThan(0);
     });
 });
