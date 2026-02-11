@@ -1,4 +1,5 @@
-import { Color, Piece, PieceType, GameMode } from './types'
+import { Color, PieceType, GameMode } from './types';
+import type { Piece } from './types';
 
 interface CastlingRights {
     whiteQueenSide: boolean;
@@ -61,13 +62,13 @@ export class Board {
 
         for (let file = 0; file < 8; file++) {
             // 1. Place White's back rank
-            this.setPiece(0, file, pieces[file], Color.White);
+            this.setPiece(0, file, pieces[file]!, Color.White);
             // 2. Place White's pawns
             this.setPiece(1, file, PieceType.Pawn, Color.White);
             // 3. Place Black's pawns
             this.setPiece(6, file, PieceType.Pawn, Color.Black);
             // 4. Place Black's back rank
-            this.setPiece(7, file, pieces[file], Color.Black);
+            this.setPiece(7, file, pieces[file]!, Color.Black);
         }
     }
 

@@ -1,9 +1,9 @@
-export enum Color {
+export const enum Color {
   White = 'w',
   Black = 'b'
 }
 
-export enum PieceType {
+export const enum PieceType {
   Pawn = 'p',
   Knight = 'n',
   Bishop = 'b',
@@ -17,7 +17,7 @@ export interface Piece {
   color: Color;
 }
 
-export enum GameMode {
+export const enum GameMode {
   Classical = 'classical',
   Dominion = 'dominion'
 }

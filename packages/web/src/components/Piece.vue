@@ -14,7 +14,7 @@
     const c = props.color === Color.White ? 'w' : 'b';
     // Mapeamos tu enum PieceType a las letras del objeto (P, N, B, R, Q, K)
     const t = props.type; 
-    return PIECE_IMAGES[`${c}${t}`];
+    return PIECE_IMAGES[`${c}${t}`] || '';
   });
 
   const onDragStart = (e: DragEvent) => {
