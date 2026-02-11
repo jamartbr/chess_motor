@@ -3,11 +3,28 @@
   import { GameMode, Board } from '@chess-motor/engine';
   import MainMenu from './components/MainMenu.vue';
   import ChessBoard from './components/ChessBoard.vue';
-  import { io } from 'socket.io-client';
 
-  const socket = io('http://localhost:3000');
+  // import { io } from 'socket.io-client';
+  // const socket = io('http://localhost:3000');
 
-  const currentGame = ref<Board | null>(null);
+
+  // esto dentro de startNewGame:
+  
+  // // When the player selects a mode in the menu
+  // const startNewGame = (mode: GameMode) => {
+  //     // 1. Tell the server we want to play
+  //     socket.emit('join_game', { roomId: 'lobby-1', mode: mode });
+
+  //     // 2. Wait for role assignment
+  //     socket.on('assigned_role', (role: 'w' | 'b') => {
+  //         const newBoard = new Board();
+  //         newBoard.mode = mode;
+  //         // We can store the role to prevent moving opponent pieces
+  //         currentGame.value = newBoard;
+  //     });
+  // };
+
+  const currentGame = ref<any>(null);
 
   const startNewGame = (mode: GameMode) => {
     // 1. Reset any existing game first
@@ -22,19 +39,6 @@
     currentGame.value = newBoard;
   };
 
-  // // When the player selects a mode in the menu
-  // const startNewGame = (mode: GameMode) => {
-  //     // 1. Tell the server we want to play
-  //     socket.emit('join_game', { roomId: 'lobby-1', mode: mode });
-
-  //     // 2. Wait for role assignment
-  //     socket.on('assigned_role', (role: 'w' | 'b') => {
-  //         const newBoard = new Board();
-  //         newBoard.mode = mode;
-  //         // We can store the role to prevent moving opponent pieces
-  //         currentGame.value = newBoard;
-  //     });
-  // };
 </script>
 
 <template>
@@ -45,7 +49,7 @@
         <button @click="currentGame = null" class="text-slate-500 hover:text-white text-xs uppercase font-bold tracking-widest">
           ← Back to Menu
         </button>
-        <ChessBoard :game="currentGame" />
+        <ChessBoard :game="currentGame!" />
     </div>
   </main>
 </template>
