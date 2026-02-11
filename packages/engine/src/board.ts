@@ -1,4 +1,4 @@
-import { Color, Piece, BoardGrid, PieceType } from './types'
+import { Color, Piece, PieceType, GameMode } from './types'
 
 interface CastlingRights {
     whiteQueenSide: boolean;
@@ -8,6 +8,8 @@ interface CastlingRights {
 }
 
 export class Board {
+
+    public mode: GameMode = GameMode.Classical;
         
     // A 128-slot array for the 0x88 representation
     private grid: (Piece | null)[] = new Array(128).fill(null);
@@ -536,6 +538,9 @@ export class Board {
      * Called at the end of every turn.
      */
     public updateControlPoints(): void {
+        // Only calculate points if we are in Dominion mode
+        if (this.mode !== GameMode.Dominion) return;
+        
         let currentTurnWhiteControl = 0;
         let currentTurnBlackControl = 0;
 

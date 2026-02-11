@@ -17,4 +17,7 @@ export interface Piece {
   color: Color;
 }
 
-export type BoardGrid = (Piece | null)[];
+export enum GameMode {
+  Classical = 'classical',
+  Dominion = 'dominion'
+}

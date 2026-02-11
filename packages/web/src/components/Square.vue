@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import Piece from './Piece.vue';
-import { Color } from '@chess-motor/engine';
+import { Color, GameMode } from '@chess-motor/engine';
 
 const props = defineProps<{
     index: number;
@@ -10,6 +10,7 @@ const props = defineProps<{
     isLastMove: boolean;
     control: Color | null;
     currentTurn: Color;
+    mode: GameMode;
 }>();
 
 const emit = defineEmits(['click', 'move']);
@@ -47,20 +48,21 @@ const onDrop = (e: DragEvent) => {
             isLastMove ? 'bg-yellow-200/40' : '',
             
             /* Logic for the Square Background Glow */
-            control === Color.White ? 'shadow-[inset_0_0_20px_rgba(59,130,246,0.4)]' : '',
-            control === Color.Black ? 'shadow-[inset_0_0_20px_rgba(239,68,68,0.4)]' : ''
+            (control !== null && mode === GameMode.Dominion)
+                ? (control === Color.White ? 'shadow-[inset_0_0_20px_rgba(59,130,246,0.6)]' : 'shadow-[inset_0_0_20px_rgba(239,68,68,0.6)]') 
+                : ''
         ]"
         @dragover="onDragOver"
         @drop="onDrop"
         @click.stop="emit('click')"
     >
-        <div 
+        <!-- <div 
             v-if="control !== null"
             class="absolute inset-0 pointer-events-none transition-opacity duration-500"
             :class="[
                 control === Color.White ? 'bg-blue-500/[0.08]' : 'bg-red-500/[0.08]'
             ]"
-        ></div>
+        ></div> -->
 
         <span v-if="(index & 7) === 0" 
             class="absolute left-0.5 top-0.5 text-[10px] font-bold select-none z-10"

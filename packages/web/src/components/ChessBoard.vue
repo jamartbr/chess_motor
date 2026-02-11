@@ -1,11 +1,15 @@
 <script setup lang="ts">
     import { ref, shallowRef, triggerRef, computed } from 'vue';
-    import { Board, Color, PieceType } from '@chess-motor/engine';
+    import { Board, Color, PieceType, GameMode } from '@chess-motor/engine';
     import Square from './Square.vue';
     import PromotionSelector from './PromotionSelector.vue';
     import { SOUNDS } from '../assets/sounds';
 
-    const game = shallowRef(new Board());
+    const props = defineProps<{
+        game: Board;
+    }>();
+
+    const game = computed(() => props.game);
     const moveKey = ref(0); // Contador de movimientos
     const selectedSquare = ref<number | null>(null);
     const lastMove = ref<{ from: number; to: number } | null>(null);
@@ -131,8 +135,8 @@
     };
 
     const resetGame = () => {
-        // 1. Create a fresh instance of the Board
-        game.value = new Board();
+        // 1. Reset the existing game instance
+        game.value.resetBoard();
         
         // 2. Reset UI state variables
         selectedSquare.value = null;
@@ -141,40 +145,14 @@
         isFinished.value = false;
         winner.value = null;
         
-        // 3. Force a re-render of the board component
+        // 3. Update the UI
         moveKey.value++;
         triggerRef(game);
 
-        // 4. Optional: Play game start sound
+        // 4. TODO: Play game start sound
         // playSound(SOUNDS.GAME_START); 
     };
 </script>
-
-<!-- <template>
-    <div class="relative">
-        <div :key="moveKey" class="grid grid-cols-8 aspect-square w-[560px] border-[12px] border-slate-700 bg-slate-800">
-            <Square 
-                v-for="index in boardIndices" 
-                :key="index"
-                :index="index"
-                :piece="game.getPieceAt(index)"
-                :is-selected="selectedSquare === index"
-                :is-last-move="lastMove?.from === index || lastMove?.to === index"
-                :control="game.getSquareControl(index)"
-                @click="onSquareClick(index)" 
-                @move="handleMove"
-            />
-
-            <div v-if="pendingPromotion" class="absolute inset-0 z-[100] bg-black/10">
-                <PromotionSelector 
-                    :color="pendingPromotion.color"
-                    :style="getPromotionStyle(pendingPromotion.to)"
-                    @select="(type) => executeMove(pendingPromotion!.from, pendingPromotion!.to, type)"
-                />
-            </div>
-        </div>
-    </div>
-</template> -->
 
 <template>
     <div class="flex flex-col md:flex-row gap-8 items-start justify-center p-8 bg-slate-900 min-h-screen">
@@ -190,6 +168,7 @@
                     :is-last-move="lastMove?.from === index || lastMove?.to === index"
                     :control="game.getSquareControl(index)"
                     :current-turn="game.turn"
+                    :mode="game.mode"
                     @click="onSquareClick(index)" 
                     @move="handleMove"
                 />
@@ -205,7 +184,7 @@
         </div>
 
         <div class="w-64 flex flex-col gap-4">
-            <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-xl">
+            <div v-if="game.mode === GameMode.Dominion" class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-xl animate-in slide-in-from-right duration-500">
                 <h2 class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-4">Dominion Points</h2>
                 
                 <div class="flex flex-col gap-6">
@@ -239,11 +218,17 @@
 
     <div v-if="isFinished" class="absolute inset-0 z-[200] flex items-center justify-center bg-slate-900/80 backdrop-blur-sm transition-all animate-in fade-in duration-500">
         <div class="bg-slate-800 p-10 rounded-2xl border-2 border-slate-600 shadow-[0_0_50px_rgba(0,0,0,0.5)] text-center flex flex-col items-center gap-6">
-            <h2 class="text-4xl font-black text-white uppercase tracking-tighter">
-                {{ winner === 'Draw' ? "It's a Draw!" : (winner === Color.White ? 'White Victory' : 'Black Victory') }}
-            </h2>
             
-            <div class="flex gap-8 items-center bg-slate-900/50 p-6 rounded-xl border border-slate-700">
+            <div class="space-y-2">
+                <h2 class="text-4xl font-black text-white uppercase tracking-tighter">
+                    {{ winner === 'Draw' ? "It's a Draw!" : (winner === Color.White ? 'White Victory' : 'Black Victory') }}
+                </h2>
+                <p v-if="game.mode === GameMode.Classical" class="text-slate-400 uppercase text-xs tracking-widest font-bold">
+                    By Checkmate
+                </p>
+            </div>
+            
+            <div v-if="game.mode === GameMode.Dominion" class="flex gap-8 items-center bg-slate-900/50 p-6 rounded-xl border border-slate-700">
                 <div class="text-center">
                     <p class="text-[10px] text-slate-500 uppercase font-bold">Final White</p>
                     <p class="text-3xl font-mono font-bold text-blue-400">{{ game.whiteControlPoints }}</p>
