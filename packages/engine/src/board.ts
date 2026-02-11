@@ -1,11 +1,19 @@
 import { Color, PieceType, GameMode } from './types';
 import type { Piece } from './types';
 
-interface CastlingRights {
+interface CastlingRights extends State {
     whiteQueenSide: boolean;
     whiteKingSide: boolean;
     blackQueenSide: boolean;
     blackKingSide: boolean;
+}
+
+interface State {
+    // turn: Color;
+    // whiteControlPoints: number;
+    // BlackControlPoints: number;
+    enPassant?: number | null;
+    promotion?: number | null;
 }
 
 export class Board {
@@ -29,7 +37,7 @@ export class Board {
     public whiteControlPoints: number = 0;
     public blackControlPoints: number = 0;
     
-    private castlingRights: CastlingRights = {
+    public castlingRights: CastlingRights = {
         whiteQueenSide: true,
         whiteKingSide: true,
         blackQueenSide: true,
@@ -39,7 +47,10 @@ export class Board {
     private enPassantSquare: number | null = null;
     private promotionSquare: number | null = null;
 
-    // The "Stack" to store historical state
+    // States are stored in a stack
+    // state 'attributes':
+    //      - rights: interface with 4 boolean values, one for each rook/king castling right
+    //      - enPassant: true if en passant capture is now plausible
     private stateStack: { rights: CastlingRights, enPassant: number | null, promotion: number | null }[] = [];
 
     public resetBoard(): void {
@@ -312,8 +323,9 @@ export class Board {
     }
 
     public makeMove(from: number, to: number, promotionType: PieceType = PieceType.Queen): Piece | null {
+        
         // Save current state to the stack
-        this.stateStack.push({ 
+        this.stateStack.push({
             rights: { ...this.castlingRights }, 
             enPassant: this.enPassantSquare,
             promotion: this.promotionSquare 
