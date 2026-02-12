@@ -37,7 +37,7 @@
             }
         } else {
             for (let rank = 0; rank < 8; rank++) { // De fila 0 a 7
-                for (let file = 8; file >= 0; file--) { // De columna 7 a 0
+                for (let file = 7; file >= 0; file--) { // De columna 7 a 0
                     indices.push((rank << 4) | file);
                 }
             }
