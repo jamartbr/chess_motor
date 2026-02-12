@@ -10,13 +10,16 @@ app.use(cors());
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: "https://chess-motor.vercel.app/", // En producción cambia esto por tu URL de Vercel
+    origin: "https://chess-motor.vercel.app",
     methods: ["GET", "POST"]
   }
 });
 
+// Use a unique room for testing
+const TEST_ROOM = "demo-room-123";
+
 io.on('connection', (socket) => {
-  console.log('Jugador conectado:', socket.id);
+  console.log(`User connected: ${socket.id}`);
 
   socket.on('join_room', (roomId: string) => {
     socket.join(roomId);
