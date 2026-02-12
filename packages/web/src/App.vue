@@ -69,18 +69,18 @@
     
     // // 4. Assign to reactive ref
     // console.log("Starting game with mode:", mode); // Debug
-
-    // Listen for opponent moves
-    socket.on('opponent_move', (data) => {
-      console.log("fuera")
-      if (currentGame.value && isMultiplayer.value) {
-        currentGame.value.makeMove(data.from, data.to, data.promotion);
-        triggerRef(currentGame);
-        console.log("dentro")
-        // TODO: play the move sound here too
-      }
-    });
   };
+
+  // Listen for opponent moves
+  socket.on('opponent_move', (data) => {
+    console.log("fuera")
+    if (currentGame.value && isMultiplayer.value) {
+      currentGame.value.makeMove(data.from, data.to, data.promotion);
+      triggerRef(currentGame);
+      console.log("dentro")
+      // TODO: play the move sound here too
+    }
+  });
 
 </script>
 
