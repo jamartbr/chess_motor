@@ -26,7 +26,7 @@ io.on('connection', (socket) => {
     const numClients = room ? room.size : 0;
 
     // First player gets White, second gets Black
-    const assignedColor = numClients === 1 ? 'w' : 'b';
+    const assignedColor = numClients === 1 ? Color.White : Color.Black;
 
     // Send the color back only to the player who just joined
     socket.emit('assigned_role', assignedColor);
