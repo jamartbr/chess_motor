@@ -190,13 +190,13 @@
         });
     }
 
-    // Logic for copying link
-    const copyText = ref('COPY GAME LINK');
-    const copyLink = () => {
-        navigator.clipboard.writeText(window.location.href);
-        copyText.value = 'COPIED!';
-        setTimeout(() => copyText.value = 'COPY GAME LINK', 2000);
-    };
+    // // Logic for copying link
+    // const copyText = ref('COPY GAME LINK');
+    // const copyLink = () => {
+    //     navigator.clipboard.writeText(window.location.href);
+    //     copyText.value = 'COPIED!';
+    //     setTimeout(() => copyText.value = 'COPY GAME LINK', 2000);
+    // };
 </script>
 
 <template>
@@ -294,16 +294,6 @@
                 PLAY AGAIN
             </button>
         </div>
-    </div>
-
-    <div v-if="isMultiplayer" class="bg-slate-800 p-4 rounded-xl border border-slate-700">
-        <p class="text-[10px] text-slate-500 uppercase font-bold mb-2">Invite Friend</p>
-        <button 
-            @click="copyLink"
-            class="w-full py-2 bg-slate-700 hover:bg-slate-600 text-white text-xs rounded transition-colors"
-        >
-            {{ copyText }}
-        </button>
     </div>
 </template>
 

@@ -29,43 +29,58 @@
   const playerColor = ref<Color | null>(null);
   const currentGame = ref<any>(null);
 
+  const isWaiting = ref(false);
+
   const startNewGame = (mode: GameMode) => {
     
     // 1. Create a fresh board instance
-    currentGame.value = new Board();
-    currentGame.value.mode = mode; // Inject the mode into the engine
+    // currentGame.value = new Board();
+    // currentGame.value.mode = mode; // Inject the mode into the engine
 
     if (isMultiplayer.value) {
         // MULTIPLAYER FLOW: Join a room and wait for role assignment
-        console.log("Connecting to multiplayer room...");
-        socket.emit('join_room', currentRoomId.value);
-        // Update URL without reloading so user can copy-paste it
-        window.history.pushState({}, '', `?room=${currentRoomId.value}`);
+        isWaiting.value = true;
+        // Tell server we want to play this specific mode
+        socket.emit('find_match', { mode: mode.toString() });
     } else {
         // SINGLE PLAYER FLOW: Clear roles to allow full control
+        currentGame.value = new Board();
+        currentGame.value.mode = mode;
         playerColor.value = null;
-        console.log("Starting local analysis mode...");
     }
     
     // // 4. Assign to reactive ref
     // console.log("Starting game with mode:", mode); // Debug
 
-    // 5. Listen for opponent moves
-    socket.on('opponent_move', (move) => {
-      if (currentGame.value && isMultiplayer.value) {
-        currentGame.value.makeMove(move.from, move.to, move.promotion);
-        triggerRef(currentGame);
-        // TODO: play the move sound here too
-      }
-    });
+    
   };
 
-  // Listen for the role assignment ONLY if we are in multiplayer mode
-  socket.on('assigned_role', (role: Color) => {
-    if (isMultiplayer.value) {
-        playerColor.value = role;
+  // Listen for the match found event
+  socket.on('match_found', (data: { roomId: string, role: Color }) => {
+    isWaiting.value = false;
+    
+    // Initialize the game with the correct settings
+    const newBoard = new Board();
+    // (Ensure you handle the string-to-enum conversion if necessary)
+    currentGame.value = newBoard;
+    playerColor.value = data.role;
+    
+    // Update the room ID injected into ChessBoard
+    currentRoomId.value = data.roomId;
+  });
+
+  socket.on('waiting_for_opponent', () => {
+    isWaiting.value = true;
+
+  // Listen for opponent moves
+  socket.on('opponent_move', (move) => {
+    if (currentGame.value && isMultiplayer.value) {
+      currentGame.value.makeMove(move.from, move.to, move.promotion);
+      triggerRef(currentGame);
+      // TODO: play the move sound here too
     }
   });
+});
 
 </script>
 
@@ -84,4 +99,14 @@
         <ChessBoard :game="currentGame!" :player-color="playerColor" :is-multiplayer="isMultiplayer" />
     </div>
   </main>
+
+  <div v-if="isWaiting" class="fixed inset-0 bg-slate-900/90 flex flex-col items-center justify-center z-[300] backdrop-blur-md">
+    <div class="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-6"></div>
+    <h2 class="text-2xl font-black text-white uppercase tracking-widest animate-pulse">
+        Finding Opponent...
+    </h2>
+    <button @click="isWaiting = false" class="mt-8 text-slate-500 hover:text-white uppercase text-xs font-bold">
+        Cancel search
+    </button>
+</div>
 </template>
