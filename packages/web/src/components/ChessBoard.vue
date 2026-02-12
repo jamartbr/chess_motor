@@ -108,6 +108,13 @@
     const onSquareClick = (index: number) => {
         const piece = game.value.getPieceAt(index);
 
+        // DEBUG: Check values in console
+        console.log({
+            pieceColor: piece?.color,
+            currentTurn: game.value.turn,
+            playerColor: props.playerColor
+        });
+
         if (selectedSquare.value === null) {
             // Only allow selection if:
             // 1. There is a piece
