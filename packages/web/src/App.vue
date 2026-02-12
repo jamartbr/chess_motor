@@ -42,6 +42,7 @@
         isWaiting.value = true;
         // Tell server we want to play this specific mode
         socket.emit('find_match', { mode: mode.toString() });
+        console.log("hola")
     } else {
         // SINGLE PLAYER FLOW: Clear roles to allow full control
         currentGame.value = new Board();
@@ -52,14 +53,14 @@
     // // 4. Assign to reactive ref
     // console.log("Starting game with mode:", mode); // Debug
 
-    // Listen for opponent moves
-    socket.on('opponent_move', (move) => {
-      if (currentGame.value && isMultiplayer.value) {
-        currentGame.value.makeMove(move.from, move.to, move.promotion);
-        triggerRef(currentGame);
-        // TODO: play the move sound here too
-      }
-    });
+    // // Listen for opponent moves
+    // socket.on('opponent_move', (move) => {
+    //   if (currentGame.value && isMultiplayer.value) {
+    //     currentGame.value.makeMove(move.from, move.to, move.promotion);
+    //     triggerRef(currentGame);
+    //     // TODO: play the move sound here too
+    //   }
+    // });
   };
 
   // Listen for the match found event

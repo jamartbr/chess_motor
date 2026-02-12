@@ -1,5 +1,5 @@
 import express from 'express';
-import { Color } from './types'
+import { Color, GameMode } from './types'
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
@@ -20,7 +20,7 @@ const TEST_ROOM = "demo-room-123";
 
 // Store players waiting for each mode
 // Key: GameMode (e.g., 'classical', 'dominion'), Value: Socket ID
-const waitingPlayers: Record<string, string | null> = {
+const waitingPlayers: Record<GameMode, GameMode | null> = {
     'classical': null,
     'dominion': null
 };
