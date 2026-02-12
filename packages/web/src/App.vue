@@ -5,7 +5,7 @@
   import ChessBoard from './components/ChessBoard.vue';
 
   import { io } from 'socket.io-client';
-  const socket = io('https://chess-server-8kwt.onrender.com');
+  const socket = io('https://chess-server-oob6.onrender.com');
 
 
   // esto dentro de startNewGame:
