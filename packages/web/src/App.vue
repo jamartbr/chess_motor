@@ -18,7 +18,7 @@
 
   const startNewGame = (mode: GameMode) => {
     // 1. Create room
-    const roomId = "sala-unica-demo";
+    const roomId = "demo-room-123";
     socket.emit('join_room', roomId);
 
     // 2. Reset any existing game first
