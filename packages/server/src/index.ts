@@ -20,7 +20,7 @@ const TEST_ROOM = "demo-room-123";
 
 // Store players waiting for each mode
 // Key: GameMode (e.g., 'classical', 'dominion'), Value: Socket ID
-const waitingPlayers: Record<GameMode, GameMode | null> = {
+const waitingPlayers: Record<string, string | null> = {
     'classical': null,
     'dominion': null
 };
@@ -28,7 +28,7 @@ const waitingPlayers: Record<GameMode, GameMode | null> = {
 io.on('connection', (socket) => {
   console.log(`User connected: ${socket.id}`);
 
-  socket.on('find_match', (data: { mode: string }) => {
+  socket.on('find_match', (data: { mode: GameMode }) => {
     const mode = data.mode;
     console.log(`User ${socket.id} looking for ${mode} match`);
 

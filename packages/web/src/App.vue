@@ -41,7 +41,7 @@
         // MULTIPLAYER FLOW: Join a room and wait for role assignment
         isWaiting.value = true;
         // Tell server we want to play this specific mode
-        socket.emit('find_match', { mode: mode.toString() });
+        socket.emit('find_match', { mode: mode });
         console.log("hola")
     } else {
         // SINGLE PLAYER FLOW: Clear roles to allow full control
