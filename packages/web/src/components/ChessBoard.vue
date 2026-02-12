@@ -12,7 +12,7 @@
 
     const props = defineProps<{
         game: Board;
-        playerColor: 'w' | 'b' | null;
+        playerColor: Color | null;
     }>();
 
     const game = computed(() => props.game);
@@ -187,6 +187,7 @@
                     :is-last-move="lastMove?.from === index || lastMove?.to === index"
                     :control="game.getSquareControl(index)"
                     :current-turn="game.turn"
+                    :player-color="playerColor"
                     :mode="game.mode"
                     @click="onSquareClick(index)" 
                     @move="handleMove"

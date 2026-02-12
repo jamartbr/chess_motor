@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { ref, triggerRef, provide } from 'vue';
-  import { GameMode, Board } from '@chess-motor/engine';
+  import { GameMode, Board, Color } from '@chess-motor/engine';
   import MainMenu from './components/MainMenu.vue';
   import ChessBoard from './components/ChessBoard.vue';
   import { io } from 'socket.io-client';
@@ -14,9 +14,9 @@
 
 
 
-  const playerColor = ref<'w' | 'b' | null>(null);
+  const playerColor = ref<Color | null>(null);
 
-  socket.on('assigned_role', (role: 'w' | 'b') => {
+  socket.on('assigned_role', (role: Color) => {
       playerColor.value = role;
       console.log(`I am playing as: ${role}`);
   });

@@ -10,6 +10,7 @@ const props = defineProps<{
     isLastMove: boolean;
     control: Color | null;
     currentTurn: Color;
+    playerColor: Color | null;
     mode: GameMode;
 }>();
 
@@ -85,6 +86,7 @@ const onDrop = (e: DragEvent) => {
                 :color="piece.color" 
                 :index="index" 
                 :current-turn="currentTurn" 
+                :player-color="playerColor"
                 @click="$emit('click')" 
                 class="pointer-events-auto"
             />
