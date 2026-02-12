@@ -75,6 +75,7 @@ io.on('connection', (socket) => {
           waitingPlayers[mode] = null;
       }
     }
+    // TODO: cerrar/avisar sala
   });
 });
 

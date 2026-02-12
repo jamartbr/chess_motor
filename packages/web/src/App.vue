@@ -53,14 +53,14 @@
     // // 4. Assign to reactive ref
     // console.log("Starting game with mode:", mode); // Debug
 
-    // // Listen for opponent moves
-    // socket.on('opponent_move', (move) => {
-    //   if (currentGame.value && isMultiplayer.value) {
-    //     currentGame.value.makeMove(move.from, move.to, move.promotion);
-    //     triggerRef(currentGame);
-    //     // TODO: play the move sound here too
-    //   }
-    // });
+    // Listen for opponent moves
+    socket.on('opponent_move', (move) => {
+      if (currentGame.value && isMultiplayer.value) {
+        currentGame.value.makeMove(move.from, move.to, move.promotion);
+        triggerRef(currentGame);
+        // TODO: play the move sound here too
+      }
+    });
   };
 
   // Listen for the match found event
