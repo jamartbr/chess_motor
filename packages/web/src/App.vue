@@ -56,9 +56,11 @@
 
   // Listen for opponent moves
   socket.on('opponent_move', (move) => {
+    console.log("fuera")
     if (currentGame.value && isMultiplayer.value) {
       currentGame.value.makeMove(move.from, move.to, move.promotion);
       triggerRef(currentGame);
+      console.log("dentro")
       // TODO: play the move sound here too
     }
   });
