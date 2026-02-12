@@ -21,8 +21,8 @@
   const currentRoomId = ref(getRoomId());
 
   // Provide the socket instance and room ID to all child components
-  provide('chessSocket', socket);
-  provide('roomId', currentRoomId);
+  // provide('chessSocket', socket);
+  // provide('roomId', currentRoomId);
 
 
   const isMultiplayer = ref(false);
@@ -102,7 +102,7 @@
         <button @click="currentGame = null" class="text-slate-500 hover:text-white text-xs uppercase font-bold tracking-widest">
           ← Back to Menu
         </button>
-        <ChessBoard :game="currentGame!" :player-color="playerColor" :is-multiplayer="isMultiplayer" />
+        <ChessBoard :game="currentGame!" :player-color="playerColor" :is-multiplayer="isMultiplayer" :socket="socket" :room-id="currentRoomId" />
     </div>
   </main>
 

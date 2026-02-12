@@ -6,14 +6,16 @@
     import { SOUNDS } from '../assets/sounds';
     import { Socket } from 'socket.io-client';
 
-    // Inject the shared socket and room ID
-    const socket = inject<Socket>('chessSocket');
-    const roomId = inject<string>('roomId');
+    // // Inject the shared socket and room ID
+    // const socket = inject<Socket>('chessSocket');
+    // const roomId = inject<string>('roomId');
 
     const props = defineProps<{
         game: Board;
         playerColor: Color | null;
         isMultiplayer: boolean;
+        socket: Socket;
+        roomId: string;
     }>();
 
     const game = computed(() => props.game);
@@ -106,10 +108,10 @@
             selectedSquare.value = null;
 
             // 10. Notify server
-            if (props.isMultiplayer && socket) {
-                console.log(`request to make move in room ${roomId}: from ${from} to ${to}`)
-                socket.emit('make_move', {
-                    roomId: roomId,
+            if (props.isMultiplayer && props.socket) {
+                console.log(`request to make move in room ${props.roomId}: from ${from} to ${to}`)
+                props.socket.emit('make_move', {
+                    roomId: props.roomId,
                     from,
                     to,
                     promotion
@@ -193,8 +195,8 @@
     };
 
     // Listen for opponent moves specifically to update the highlight
-    if (socket) {
-        socket.on('opponent_move', (move) => {
+    if (props.socket) {
+        props.socket.on('opponent_move', (move) => {
             // Update the highlight coordinates for the opponent's move
             lastMove.value = { from: move.from, to: move.to };
         });
