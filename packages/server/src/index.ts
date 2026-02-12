@@ -20,7 +20,7 @@ const TEST_ROOM = "demo-room-123";
 
 // Store players waiting for each mode
 // Key: GameMode (e.g., 'classical', 'dominion'), Value: Socket ID
-const waitingPlayers: Record<string, string | null> = {
+const waitingPlayers: Record<GameMode, string | null> = {
     'classical': null,
     'dominion': null
 };
@@ -36,7 +36,7 @@ io.on('connection', (socket) => {
 
     if (opponentId && opponentId !== socket.id) {
       // MATCH FOUND!
-      // const roomId = `room-${opponentId}-${socket.id}`;
+      const roomId = `room-${opponentId}-${socket.id}`;
       
       // Clear the waiting slot
       waitingPlayers[mode] = null;
@@ -48,8 +48,8 @@ io.on('connection', (socket) => {
         socket.join(data.roomId);
 
         // Notify both and assign roles
-        io.to(opponentId).emit('match_found', { roomId: data.roomId, role: 'w' });
-        socket.emit('match_found', { roomId: data.roomId, role: 'b' });
+        io.to(opponentId).emit('match_found', { roomId: roomId, role: 'w' });
+        socket.emit('match_found', { roomId: roomId, role: 'b' });
         
         // Start the game for both
         io.to(data.roomId).emit('game_ready');
@@ -70,13 +70,13 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    // Remove from waiting lines if they disconnect
-    for (const mode in waitingPlayers) {
-      if (waitingPlayers[mode] === socket.id) {
-          waitingPlayers[mode] = null;
-      }
-    }
-    // TODO: cerrar/avisar sala
+    // // Remove from waiting lines if they disconnect
+    // for (const mode in waitingPlayers) {
+    //   if (waitingPlayers[mode] === socket.id) {
+    //       waitingPlayers[mode] = null;
+    //   }
+    // }
+    // // TODO: cerrar/avisar sala
   });
 });
 

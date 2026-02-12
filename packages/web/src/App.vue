@@ -56,7 +56,7 @@
           playerColor.value = data.role;
           
           // Update the room ID injected into ChessBoard
-          // currentRoomId.value = data.roomId;
+          currentRoomId.value = data.roomId;
           console.log("Match found! Joining room:", currentRoomId.value);
         });
     } else {
