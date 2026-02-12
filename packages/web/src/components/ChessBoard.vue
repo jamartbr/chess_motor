@@ -28,9 +28,18 @@
     // y la fila 0 (blancas) esté abajo.
     const boardIndices = computed(() => {
         const indices = [];
-        for (let rank = 7; rank >= 0; rank--) { // De fila 7 a 0
-            for (let file = 0; file < 8; file++) {
-                indices.push((rank << 4) | file);
+        const color = props.playerColor;
+        if (color && color === Color.White) {
+            for (let rank = 7; rank >= 0; rank--) { // De fila 7 a 0
+                for (let file = 0; file < 8; file++) {
+                    indices.push((rank << 4) | file);
+                }
+            }
+        } else {
+            for (let rank = 0; rank < 8; rank++) { // De fila 0 a 7
+                for (let file = 0; file < 8; file++) {
+                    indices.push((rank << 4) | file);
+                }
             }
         }
         return indices;
