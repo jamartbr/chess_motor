@@ -181,6 +181,14 @@
         // 4. TODO: Play game start sound
         // playSound(SOUNDS.GAME_START); 
     };
+
+    // Listen for opponent moves specifically to update the highlight
+    if (socket) {
+        socket.on('opponent_move', (move) => {
+            // Update the highlight coordinates for the opponent's move
+            lastMove.value = { from: move.from, to: move.to };
+        });
+    }
 </script>
 
 <template>
