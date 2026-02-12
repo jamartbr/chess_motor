@@ -107,7 +107,7 @@
 
             // 10. Notify server
             if (props.isMultiplayer && socket) {
-                console.log("hola")
+                console.log(`request to make move in room ${roomId}: from ${from} to ${to}`)
                 socket.emit('make_move', {
                     roomId: roomId,
                     from,
