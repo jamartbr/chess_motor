@@ -72,10 +72,10 @@
   };
 
   // Listen for opponent moves
-  socket.on('opponent_move', (move) => {
+  socket.on('opponent_move', (data) => {
     console.log("fuera")
     if (currentGame.value && isMultiplayer.value) {
-      currentGame.value.makeMove(move.from, move.to, move.promotion);
+      currentGame.value.makeMove(data.from, data.to, data.promotion);
       triggerRef(currentGame);
       console.log("dentro")
       // TODO: play the move sound here too
@@ -84,9 +84,7 @@
 
   socket.on('waiting_for_opponent', () => {
     isWaiting.value = true;
-
-  
-});
+  });
 
 </script>
 
