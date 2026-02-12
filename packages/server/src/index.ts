@@ -1,4 +1,5 @@
 import express from 'express';
+import { Color } from './types'
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
