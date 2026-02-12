@@ -64,9 +64,17 @@ io.on('connection', (socket) => {
   });
 
   socket.on('make_move', (data) => {
-    // El servidor recibe el movimiento y lo envía a los DEMÁS en la misma sala
+    // // El servidor recibe el movimiento y lo envía a los DEMÁS en la misma sala
+    // socket.to(data.roomId).emit('opponent_move', data);
+    // console.log(`request to make move in room ${data.roomId}: from ${data.from} to ${data.to}`)
+    console.log(`Step 1: Server received move from ${socket.id} for room ${data.roomId}`);
+    
+    // Check if the room actually has the opponent
+    const clients = io.sockets.adapter.rooms.get(data.roomId);
+    console.log(`Step 2: Room ${data.roomId} contains clients:`, Array.from(clients || []));
+
     socket.to(data.roomId).emit('opponent_move', data);
-    console.log(`request to make move in room ${data.roomId}: from ${data.from} to ${data.to}`)
+    console.log(`Step 3: Broadcast sent to room ${data.roomId}`);
   });
 
   socket.on('disconnect', () => {
