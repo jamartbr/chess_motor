@@ -20,18 +20,23 @@ const TEST_ROOM = "demo-room-123";
 
 io.on('connection', (socket) => {
   socket.on('join_room', (roomId: string) => {
+    // 1. Leave any previous rooms to avoid "double moves"
+    const currentRooms = Array.from(socket.rooms);
+    currentRooms.forEach(room => {
+        if (room !== socket.id) socket.leave(room);
+    });
+
     socket.join(roomId);
+    console.log(`User ${socket.id} joined room: ${roomId}`);
     
+    // 2. Count players in this room
     const room = io.sockets.adapter.rooms.get(roomId);
     const numClients = room ? room.size : 0;
 
-    // First player gets White, second gets Black
+    // 3. Assign role based on room occupancy
     const assignedColor = numClients === 1 ? Color.White : Color.Black;
-
-    // Send the color back only to the player who just joined
     socket.emit('assigned_role', assignedColor);
 
-    console.log(`User ${socket.id} assigned to ${assignedColor} in room ${roomId}`);
     if (numClients === 2) {
       io.to(roomId).emit('game_ready');
     }

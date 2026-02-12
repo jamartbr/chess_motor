@@ -8,9 +8,21 @@
   // Initialize the socket connection
   const socket = io('https://chess-server-oob6.onrender.com');
 
+  // Get the room from URL or generate a random one
+  const getRoomId = () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const room = urlParams.get('room');
+      if (room) return room;
+      
+      // If no room in URL, create a random string
+      return Math.random().toString(36).substring(2, 9);
+  };
+
+  const currentRoomId = ref(getRoomId());
+
   // Provide the socket instance and room ID to all child components
   provide('chessSocket', socket);
-  provide('roomId', 'demo-room-123');
+  provide('roomId', currentRoomId);
 
 
   const isMultiplayer = ref(false);
@@ -26,7 +38,9 @@
     if (isMultiplayer.value) {
         // MULTIPLAYER FLOW: Join a room and wait for role assignment
         console.log("Connecting to multiplayer room...");
-        socket.emit('join_room', 'demo-room-123');
+        socket.emit('join_room', currentRoomId.value);
+        // Update URL without reloading so user can copy-paste it
+        window.history.pushState({}, '', `?room=${currentRoomId.value}`);
     } else {
         // SINGLE PLAYER FLOW: Clear roles to allow full control
         playerColor.value = null;
