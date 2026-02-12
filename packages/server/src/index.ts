@@ -66,6 +66,7 @@ io.on('connection', (socket) => {
   socket.on('make_move', (data: { roomId: string, from: number, to: number, promotion: string }) => {
     // El servidor recibe el movimiento y lo envía a los DEMÁS en la misma sala
     socket.to(data.roomId).emit('opponent_move', data);
+    console.log(`request to make move in room ${data.roomId}: from ${data.from} to ${data.to}`)
   });
 
   socket.on('disconnect', () => {
