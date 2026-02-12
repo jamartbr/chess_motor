@@ -63,6 +63,11 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('make_move', (data: { roomId: string, from: number, to: number, promotion: string }) => {
+    // El servidor recibe el movimiento y lo envía a los DEMÁS en la misma sala
+    socket.to(data.roomId).emit('opponent_move', data);
+  });
+
   socket.on('disconnect', () => {
     // Remove from waiting lines if they disconnect
     for (const mode in waitingPlayers) {
