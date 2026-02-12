@@ -48,8 +48,8 @@ io.on('connection', (socket) => {
         socket.join(roomId);
 
         // Notify both and assign roles
-        io.to(opponentId).emit('match_found', { roomId, role: 'white' });
-        socket.emit('match_found', { roomId, role: 'black' });
+        io.to(opponentId).emit('match_found', { roomId, role: 'w' });
+        socket.emit('match_found', { roomId, role: 'b' });
         
         // Start the game for both
         io.to(roomId).emit('game_ready');
