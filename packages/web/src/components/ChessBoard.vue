@@ -13,6 +13,7 @@
     const props = defineProps<{
         game: Board;
         playerColor: Color | null;
+        isMultiplayer: boolean;
     }>();
 
     const game = computed(() => props.game);
@@ -96,12 +97,14 @@
             selectedSquare.value = null;
 
             // 10. Notify server
-            socket.emit('make_move', {
-                roomId: 'demo-room-123',
-                from,
-                to,
-                promotion
-            });
+            if (props.isMultiplayer && socket) {
+                socket.emit('make_move', {
+                    roomId: 'demo-room-123',
+                    from,
+                    to,
+                    promotion
+                });
+            }
         }
     };
 

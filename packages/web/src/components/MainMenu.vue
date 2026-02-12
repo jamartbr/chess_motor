@@ -1,11 +1,36 @@
 <script setup lang="ts">
 import { GameMode } from '@chess-motor/engine';
 
-const emit = defineEmits(['selectMode']);
+const props = defineProps<{
+    modelValue: boolean; // This will bind to isMultiplayerMode
+}>();
+
+const emit = defineEmits(['selectMode', 'update:modelValue']);
 </script>
 
 <template>
   <div class="flex flex-col items-center justify-center gap-8 p-12 bg-slate-800 rounded-3xl border-2 border-slate-700 shadow-2xl">
+    <div class="flex items-center gap-4 bg-slate-900/50 p-4 rounded-2xl border border-slate-700">
+        <span :class="!modelValue ? 'text-white font-bold' : 'text-slate-500'" class="text-sm transition-colors">
+            SINGLE PLAYER
+        </span>
+        
+        <button 
+            @click="emit('update:modelValue', !modelValue)"
+            class="relative w-14 h-7 bg-slate-700 rounded-full p-1 transition-colors duration-300"
+            :class="{ 'bg-blue-600': modelValue }"
+        >
+            <div 
+                class="w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-300"
+                :class="{ 'translate-x-7': modelValue }"
+            ></div>
+        </button>
+
+        <span :class="modelValue ? 'text-blue-400 font-bold' : 'text-slate-500'" class="text-sm transition-colors">
+            MULTIPLAYER
+        </span>
+    </div>
+    
     <div class="text-center">
       <h1 class="text-4xl font-black text-white tracking-tighter mb-2">CHESS MOTOR</h1>
       <p class="text-slate-400 text-sm italic">Select your battlefield</p>
@@ -29,5 +54,13 @@ const emit = defineEmits(['selectMode']);
         <p class="text-xs text-blue-200/60 text-left">Control squares to earn points. Win by total territory score.</p>
       </button>
     </div>
+  </div>
+</template>
+
+<template>
+  <div class="flex flex-col items-center justify-center gap-8 p-12 bg-slate-800 rounded-3xl border-2 border-slate-700 shadow-2xl">
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
+        </div>
   </div>
 </template>
