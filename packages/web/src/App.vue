@@ -1,11 +1,11 @@
 <script setup lang="ts">
-  import { ref } from 'vue';
+  import { ref, triggerRef } from 'vue';
   import { GameMode, Board } from '@chess-motor/engine';
   import MainMenu from './components/MainMenu.vue';
   import ChessBoard from './components/ChessBoard.vue';
 
-  // import { io } from 'socket.io-client';
-  // const socket = io('http://localhost:3000');
+  import { io } from 'socket.io-client';
+  const socket = io('https://chess-server-8kwt.onrender.com');
 
 
   // esto dentro de startNewGame:
@@ -27,16 +27,28 @@
   const currentGame = ref<any>(null);
 
   const startNewGame = (mode: GameMode) => {
-    // 1. Reset any existing game first
+    // 1. Create room
+    const roomId = "sala-unica-demo";
+    socket.emit('join_room', roomId);
+
+    // 2. Reset any existing game first
     currentGame.value = null; 
     
-    // 2. Create the new board and set the mode
+    // 3. Create the new board and set the mode
     const newBoard = new Board();
     newBoard.mode = mode; // Inject the mode into the engine
     
-    // 3. Assign to reactive ref
+    // 4. Assign to reactive ref
     console.log("Starting game with mode:", mode); // Debug
     currentGame.value = newBoard;
+
+    // 5. Listen for opponent moves
+    socket.on('receive_move', (move) => {
+        if (currentGame.value) {
+            currentGame.value.makeMove(move.from, move.to, move.promotion);
+            triggerRef(currentGame); // Force Vue to update
+        }
+    });
   };
 
 </script>
