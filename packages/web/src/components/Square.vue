@@ -12,6 +12,7 @@ const props = defineProps<{
     currentTurn: Color;
     playerColor: Color | null;
     mode: GameMode;
+    isMultiplayer: boolean;
 }>();
 
 const emit = defineEmits(['click', 'move']);
@@ -87,6 +88,7 @@ const onDrop = (e: DragEvent) => {
                 :index="index" 
                 :current-turn="currentTurn" 
                 :player-color="playerColor"
+                :is-multiplayer="isMultiplayer"
                 @click="$emit('click')" 
                 class="pointer-events-auto"
             />

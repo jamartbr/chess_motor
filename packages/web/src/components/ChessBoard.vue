@@ -99,7 +99,7 @@
             // 10. Notify server
             if (props.isMultiplayer && socket) {
                 socket.emit('make_move', {
-                    roomId: 'demo-room-123',
+                    roomId: roomId,
                     from,
                     to,
                     promotion
@@ -198,6 +198,7 @@
                     :control="game.getSquareControl(index)"
                     :current-turn="game.turn"
                     :player-color="playerColor"
+                    :is-multiplayer="isMultiplayer"
                     :mode="game.mode"
                     @click="onSquareClick(index)" 
                     @move="handleMove"

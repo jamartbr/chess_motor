@@ -36,16 +36,14 @@
     // // 4. Assign to reactive ref
     // console.log("Starting game with mode:", mode); // Debug
 
-    // // 5. Listen for opponent moves
-    // socket.on('opponent_move', (move) => {
-    //     console.log("Move received from server:", move);
-    //     if (currentGame.value) {
-    //         // Apply the move to the local engine instance
-    //         currentGame.value.makeMove(move.from, move.to, move.promotion);
-    //         // Manually trigger Vue reactivity for the board
-    //         triggerRef(currentGame);
-    //     }
-    // });
+    // 5. Listen for opponent moves
+    socket.on('opponent_move', (move) => {
+      if (currentGame.value && isMultiplayer.value) {
+        currentGame.value.makeMove(move.from, move.to, move.promotion);
+        triggerRef(currentGame);
+        // TODO: play the move sound here too
+      }
+    });
   };
 
   // Listen for the role assignment ONLY if we are in multiplayer mode

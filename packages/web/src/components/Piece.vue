@@ -8,7 +8,8 @@
     color: Color;
     index: number;
     currentTurn: Color;
-    playerColor: Color;
+    playerColor: Color | null;
+    isMultiplayer: boolean;
   }>();
 
   const imageSrc = computed(() => {
@@ -19,11 +20,16 @@
   });
 
   const onDragStart = (e: DragEvent) => {
-    // Check if it's this piece's turn
-    if (props.color !== props.currentTurn || props.color !== props.playerColor) {
-      e.preventDefault(); // Stop the drag before it starts
+    const isCorrectTurn = props.color === props.currentTurn;
+
+    // LOGIC: If multiplayer, check color. If single player, ignore role check.
+    const canMoveThisPiece = !props.isMultiplayer || props.color === props.playerColor;
+    
+    if (!isCorrectTurn || !canMoveThisPiece) {
+      e.preventDefault();
       return;
     }
+
     if (e.dataTransfer) {
       e.dataTransfer.setData('text/plain', props.index.toString());
       e.dataTransfer.dropEffect = 'move';

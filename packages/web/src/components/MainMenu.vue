@@ -30,7 +30,7 @@ const emit = defineEmits(['selectMode', 'update:modelValue']);
             MULTIPLAYER
         </span>
     </div>
-    
+
     <div class="text-center">
       <h1 class="text-4xl font-black text-white tracking-tighter mb-2">CHESS MOTOR</h1>
       <p class="text-slate-400 text-sm italic">Select your battlefield</p>
@@ -54,13 +54,5 @@ const emit = defineEmits(['selectMode', 'update:modelValue']);
         <p class="text-xs text-blue-200/60 text-left">Control squares to earn points. Win by total territory score.</p>
       </button>
     </div>
-  </div>
-</template>
-
-<template>
-  <div class="flex flex-col items-center justify-center gap-8 p-12 bg-slate-800 rounded-3xl border-2 border-slate-700 shadow-2xl">
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
-        </div>
   </div>
 </template>
