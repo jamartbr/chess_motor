@@ -28,7 +28,7 @@ const waitingPlayers: Record<string, string | null> = {
 io.on('connection', (socket) => {
   console.log(`User connected: ${socket.id}`);
 
-  socket.on('find_match', (data: { mode: GameMode }) => {
+  socket.on('find_match', (data: { mode: GameMode, roomId: string }) => {
     const mode = data.mode;
     console.log(`User ${socket.id} looking for ${mode} match`);
 
@@ -36,7 +36,7 @@ io.on('connection', (socket) => {
 
     if (opponentId && opponentId !== socket.id) {
       // MATCH FOUND!
-      const roomId = `room-${opponentId}-${socket.id}`;
+      // const roomId = `room-${opponentId}-${socket.id}`;
       
       // Clear the waiting slot
       waitingPlayers[mode] = null;
@@ -44,16 +44,16 @@ io.on('connection', (socket) => {
       // Join both to the new room
       const opponentSocket = io.sockets.sockets.get(opponentId);
       if (opponentSocket) {
-        opponentSocket.join(roomId);
-        socket.join(roomId);
+        opponentSocket.join(data.roomId);
+        socket.join(data.roomId);
 
         // Notify both and assign roles
-        io.to(opponentId).emit('match_found', { roomId, role: 'w' });
-        socket.emit('match_found', { roomId, role: 'b' });
+        io.to(opponentId).emit('match_found', { roomId: data.roomId, role: 'w' });
+        socket.emit('match_found', { roomId: data.roomId, role: 'b' });
         
         // Start the game for both
-        io.to(roomId).emit('game_ready');
-        console.log(`Match started in ${roomId} for mode ${mode}`);
+        io.to(data.roomId).emit('game_ready');
+        console.log(`Match started in ${data.roomId} for mode ${mode}`);
       }
     } else {
       // NO OPPONENT: Put the player in the waiting line
