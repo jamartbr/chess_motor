@@ -34,6 +34,7 @@
 
     // 5. Listen for opponent moves
     socket.on('opponent_move', (move) => {
+        console.log("Move received from server:", move);
         if (currentGame.value) {
             // Apply the move to the local engine instance
             currentGame.value.makeMove(move.from, move.to, move.promotion);

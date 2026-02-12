@@ -95,8 +95,8 @@
             selectedSquare.value = null;
 
             // 10. Notify server
-            socket.emit('send_move', {
-                roomId: roomId,
+            socket.emit('make_move', {
+                roomId: 'demo-room-123',
                 from,
                 to,
                 promotion
