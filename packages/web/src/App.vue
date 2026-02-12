@@ -43,6 +43,21 @@
         // Tell server we want to play this specific mode
         socket.emit('find_match', { mode: mode });
         console.log("hola")
+
+        // Listen for the match found event
+        socket.on('match_found', (data: { roomId: string, role: Color }) => {
+          isWaiting.value = false;
+          
+          // Initialize the game with the correct settings
+          const newBoard = new Board();
+          newBoard.mode = currentGame.value.mode;
+          currentGame.value = newBoard;
+          playerColor.value = data.role;
+          
+          // Update the room ID injected into ChessBoard
+          currentRoomId.value = data.roomId;
+          console.log("Match found! Joining room:", data.roomId);
+        });
     } else {
         // SINGLE PLAYER FLOW: Clear roles to allow full control
         currentGame.value = new Board();
@@ -63,20 +78,6 @@
       console.log("dentro")
       // TODO: play the move sound here too
     }
-  });
-
-  // Listen for the match found event
-  socket.on('match_found', (data: { roomId: string, role: Color }) => {
-    isWaiting.value = false;
-    
-    // Initialize the game with the correct settings
-    const newBoard = new Board();
-    // (Ensure you handle the string-to-enum conversion if necessary)
-    currentGame.value = newBoard;
-    playerColor.value = data.role;
-    
-    // Update the room ID injected into ChessBoard
-    currentRoomId.value = data.roomId;
   });
 
   socket.on('waiting_for_opponent', () => {
