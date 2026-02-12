@@ -1,28 +1,18 @@
 <script setup lang="ts">
-  import { ref, triggerRef } from 'vue';
+  import { ref, triggerRef, provide } from 'vue';
   import { GameMode, Board } from '@chess-motor/engine';
   import MainMenu from './components/MainMenu.vue';
   import ChessBoard from './components/ChessBoard.vue';
-
   import { io } from 'socket.io-client';
+
+  // Initialize the socket connection
   const socket = io('https://chess-server-oob6.onrender.com');
 
+  // Provide the socket instance and room ID to all child components
+  provide('chessSocket', socket);
+  provide('roomId', 'demo-room-123');
 
-  // esto dentro de startNewGame:
-  
-  // // When the player selects a mode in the menu
-  // const startNewGame = (mode: GameMode) => {
-  //     // 1. Tell the server we want to play
-  //     socket.emit('join_game', { roomId: 'lobby-1', mode: mode });
 
-  //     // 2. Wait for role assignment
-  //     socket.on('assigned_role', (role: 'w' | 'b') => {
-  //         const newBoard = new Board();
-  //         newBoard.mode = mode;
-  //         // We can store the role to prevent moving opponent pieces
-  //         currentGame.value = newBoard;
-  //     });
-  // };
 
   const currentGame = ref<any>(null);
 
@@ -43,10 +33,12 @@
     currentGame.value = newBoard;
 
     // 5. Listen for opponent moves
-    socket.on('receive_move', (move) => {
+    socket.on('opponent_move', (move) => {
         if (currentGame.value) {
+            // Apply the move to the local engine instance
             currentGame.value.makeMove(move.from, move.to, move.promotion);
-            triggerRef(currentGame); // Force Vue to update
+            // Manually trigger Vue reactivity for the board
+            triggerRef(currentGame);
         }
     });
   };

@@ -1,9 +1,14 @@
 <script setup lang="ts">
-    import { ref, shallowRef, triggerRef, computed } from 'vue';
+    import { ref, triggerRef, computed, inject } from 'vue';
     import { Board, Color, PieceType, GameMode } from '@chess-motor/engine';
     import Square from './Square.vue';
     import PromotionSelector from './PromotionSelector.vue';
     import { SOUNDS } from '../assets/sounds';
+    import { Socket } from 'socket.io-client';
+
+    // Inject the shared socket and room ID
+    const socket = inject<Socket>('chessSocket');
+    const roomId = inject<string>('roomId');
 
     const props = defineProps<{
         game: Board;
@@ -88,6 +93,14 @@
             lastMove.value = { from, to };
             pendingPromotion.value = null;
             selectedSquare.value = null;
+
+            // 10. Notify server
+            socket.emit('send_move', {
+                roomId: roomId,
+                from,
+                to,
+                promotion
+            });
         }
     };
 
