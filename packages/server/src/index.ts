@@ -44,15 +44,17 @@ io.on('connection', (socket) => {
       // Join both to the new room
       const opponentSocket = io.sockets.sockets.get(opponentId);
       if (opponentSocket) {
-        opponentSocket.join(data.roomId);
-        socket.join(data.roomId);
+        opponentSocket.join(roomId);
+        socket.join(roomId);
 
         // Notify both and assign roles
-        io.to(opponentId).emit('match_found', { roomId: roomId, role: 'w' });
-        socket.emit('match_found', { roomId: roomId, role: 'b' });
+        io.to(opponentId).emit('match_found', { roomId, role: 'w' });
+        socket.emit('match_found', { roomId, role: 'b' });
         
         // Start the game for both
-        io.to(data.roomId).emit('game_ready');
+        setTimeout(() => {
+          io.to(roomId).emit('game_ready');
+        }, 100);
         console.log(`Match started in ${data.roomId} for mode ${mode}`);
       }
     } else {
