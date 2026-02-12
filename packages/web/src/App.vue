@@ -14,6 +14,15 @@
 
 
 
+  const playerColor = ref<'w' | 'b' | null>(null);
+
+  socket.on('assigned_role', (role: 'w' | 'b') => {
+      playerColor.value = role;
+      console.log(`I am playing as: ${role}`);
+  });
+
+
+
   const currentGame = ref<any>(null);
 
   const startNewGame = (mode: GameMode) => {
@@ -54,7 +63,7 @@
         <button @click="currentGame = null" class="text-slate-500 hover:text-white text-xs uppercase font-bold tracking-widest">
           ← Back to Menu
         </button>
-        <ChessBoard :game="currentGame!" />
+        <ChessBoard :game="currentGame!" :player-color="playerColor" />
     </div>
   </main>
 </template>

@@ -12,6 +12,7 @@
 
     const props = defineProps<{
         game: Board;
+        playerColor: 'w' | 'b' | null;
     }>();
 
     const game = computed(() => props.game);
@@ -108,17 +109,22 @@
         const piece = game.value.getPieceAt(index);
 
         if (selectedSquare.value === null) {
-            // PRIMER CLIC: Seleccionamos solo si hay pieza y es su turno
-            if (piece && piece.color === game.value.turn) {
+            // Only allow selection if:
+            // 1. There is a piece
+            // 2. It is the player's turn in the engine
+            // 3. The piece matches the player's assigned color
+            if (piece && 
+                piece.color === game.value.turn && 
+                piece.color === props.playerColor) {
                 selectedSquare.value = index;
             }
         } else {
-            // SEGUNDO CLIC:
-            // Si clicamos otra pieza del mismo color, cambiamos la selección
+            // Standard movement logic
+            // If the piece is another one different from the selected one, but same color
             if (piece && piece.color === game.value.turn) {
                 selectedSquare.value = index;
             } else {
-                // Si es casilla vacía o enemiga, intentamos el movimiento
+                // If enemy piece, try move
                 handleMove(selectedSquare.value, index);
             }
         }

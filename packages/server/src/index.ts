@@ -19,15 +19,20 @@ const io = new Server(httpServer, {
 const TEST_ROOM = "demo-room-123";
 
 io.on('connection', (socket) => {
-  console.log(`User connected: ${socket.id}`);
-
   socket.on('join_room', (roomId: string) => {
     socket.join(roomId);
-    console.log(`User joined room: ${roomId}`);
     
-    // Si hay 2 personas, avisamos que el juego puede empezar
     const room = io.sockets.adapter.rooms.get(roomId);
-    if (room && room.size === 2) {
+    const numClients = room ? room.size : 0;
+
+    // First player gets White, second gets Black
+    const assignedColor = numClients === 1 ? 'white' : 'black';
+
+    // Send the color back only to the player who just joined
+    socket.emit('assigned_role', assignedColor);
+
+    console.log(`User ${socket.id} assigned to ${assignedColor} in room ${roomId}`);
+    if (numClients === 2) {
       io.to(roomId).emit('game_ready');
     }
   });
