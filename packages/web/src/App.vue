@@ -57,7 +57,8 @@
           
           // Update the room ID injected into ChessBoard
           currentRoomId.value = data.roomId;
-          console.log("Match found! Joining room:", currentRoomId.value);
+          console.log("Match found! Joining room:", data.roomId);
+          triggerRef(currentRoomId);
         });
     } else {
         // SINGLE PLAYER FLOW: Clear roles to allow full control
