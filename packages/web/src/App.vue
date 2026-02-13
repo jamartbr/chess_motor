@@ -68,6 +68,8 @@
         currentGame.value = new Board();
         currentGame.value.mode = mode;
         playerColor.value = color;
+
+        console.log(`inside startNewGame: color = ${color}`);
     }
     
     // // 4. Assign to reactive ref

@@ -31,6 +31,7 @@
     const boardIndices = computed(() => {
         const indices = [];
         const color = props.playerColor;
+        console.log(`inside boardIndices: color = ${color}`);
         if (color && color === Color.White) {
             for (let rank = 7; rank >= 0; rank--) { // De fila 7 a 0
                 for (let file = 0; file < 8; file++) { // De columna 0 a 7
