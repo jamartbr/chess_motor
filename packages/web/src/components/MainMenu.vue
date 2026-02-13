@@ -82,7 +82,7 @@ const options = [
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
       <button 
-        @click="emit('selectMode', GameMode.Classical)"
+        @click="emit('selectMode', GameMode.Classical, color)"
         class="group relative flex flex-col p-6 bg-slate-700 hover:bg-slate-600 rounded-2xl transition-all border-b-4 border-slate-900 active:border-b-0 active:translate-y-1"
       >
         <span class="text-xl font-bold text-white mb-2">Classical</span>
@@ -90,7 +90,7 @@ const options = [
       </button>
 
       <button 
-        @click="emit('selectMode', GameMode.Dominion)"
+        @click="emit('selectMode', GameMode.Dominion, color)"
         class="group relative flex flex-col p-6 bg-blue-900/40 hover:bg-blue-800/50 rounded-2xl transition-all border-b-4 border-blue-900 active:border-b-0 active:translate-y-1"
       >
         <div class="absolute top-4 right-4 w-2 h-2 rounded-full bg-blue-400 animate-pulse"></div>
