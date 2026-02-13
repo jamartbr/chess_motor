@@ -78,6 +78,8 @@ const options = [
       <p class="text-slate-400 text-sm italic">Select your battlefield</p>
     </div>
 
+    <p class="text-white">Debug: Current color is {{ color }}</p>
+
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
       <button 
         @click="emit('selectMode', GameMode.Classical)"
