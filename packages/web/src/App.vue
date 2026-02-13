@@ -31,7 +31,7 @@
 
   const isWaiting = ref(false);
 
-  const startNewGame = (mode: GameMode) => {
+  const startNewGame = (mode: GameMode, color: Color) => {
     
     // 1. Create a fresh board instance
     currentGame.value = new Board();
@@ -67,7 +67,7 @@
         // SINGLE PLAYER FLOW: Clear roles to allow full control
         currentGame.value = new Board();
         currentGame.value.mode = mode;
-        playerColor.value = null;
+        playerColor.value = color;
     }
     
     // // 4. Assign to reactive ref
