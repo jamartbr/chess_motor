@@ -3,10 +3,16 @@ import { Color, GameMode } from '@chess-motor/engine';
 
 defineProps<{
     modelValue: boolean; // This will bind to isMultiplayerMode
-    color: Color;
+    color: Color | null;
 }>();
 
 const emit = defineEmits(['selectMode', 'update:modelValue', 'update:color']);
+
+const options = [
+    { label: 'WHITE', value: Color.White },
+    { label: 'RANDOM', value: null },
+    { label: 'BLACK', value: Color.Black }
+];
 </script>
 
 <template>
@@ -32,7 +38,7 @@ const emit = defineEmits(['selectMode', 'update:modelValue', 'update:color']);
         </span>
     </div>
 
-    <div class="flex items-center gap-4 bg-slate-900/50 p-4 rounded-2xl border border-slate-700">
+    <!-- <div class="flex items-center gap-4 bg-slate-900/50 p-4 rounded-2xl border border-slate-700">
         <span :class="color === Color.White ? 'text-white font-bold' : 'text-slate-500'" class="text-sm transition-colors">
             WHITE
         </span>
@@ -51,6 +57,20 @@ const emit = defineEmits(['selectMode', 'update:modelValue', 'update:color']);
         <span :class="color === Color.Black ? 'text-blue-400 font-bold' : 'text-slate-500'" class="text-sm transition-colors">
             BLACK
         </span>
+    </div> -->
+
+    <div class="flex bg-slate-900/80 p-1 rounded-xl border border-slate-700 shadow-inner">
+        <button 
+            v-for="opt in options" 
+            :key="opt.label"
+            @click="emit('update:color', opt.value)"
+            class="px-6 py-2 rounded-lg text-sm font-bold transition-all duration-200"
+            :class="color === opt.value 
+                ? 'bg-blue-600 text-white shadow-lg' 
+                : 'text-slate-500 hover:text-slate-300'"
+        >
+            {{ opt.label }}
+        </button>
     </div>
 
     <div class="text-center">
