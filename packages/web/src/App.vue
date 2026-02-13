@@ -92,7 +92,7 @@
   <MainMenu 
     v-if="!currentGame" 
     v-model="isMultiplayer"
-    :color="playerColor"
+    v-model:color="playerColor"
     @select-mode="startNewGame" 
   />
     
