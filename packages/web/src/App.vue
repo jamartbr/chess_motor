@@ -89,10 +89,11 @@
 
 <template>
   <main class="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-    <MainMenu 
-      v-if="!currentGame" 
-      v-model="isMultiplayer"
-      @select-mode="startNewGame" 
+  <MainMenu 
+    v-if="!currentGame" 
+    v-model="isMultiplayer"
+    :color="playerColor"
+    @select-mode="startNewGame" 
   />
     
     <div v-else class="flex flex-col items-center gap-4">

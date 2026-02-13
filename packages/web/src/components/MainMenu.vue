@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { GameMode } from '@chess-motor/engine';
+import { Color, GameMode } from '@chess-motor/engine';
 
 const props = defineProps<{
     modelValue: boolean; // This will bind to isMultiplayerMode
+    color: Color;
 }>();
 
 const emit = defineEmits(['selectMode', 'update:modelValue']);
@@ -28,6 +29,27 @@ const emit = defineEmits(['selectMode', 'update:modelValue']);
 
         <span :class="modelValue ? 'text-blue-400 font-bold' : 'text-slate-500'" class="text-sm transition-colors">
             MULTIPLAYER
+        </span>
+    </div>
+
+    <div class="flex items-center gap-4 bg-slate-900/50 p-4 rounded-2xl border border-slate-700">
+        <span :class="!color ? 'text-white font-bold' : 'text-slate-500'" class="text-sm transition-colors">
+            WHITE
+        </span>
+        
+        <button 
+            @click="emit('update:modelValue', !modelValue)"
+            class="relative w-14 h-7 bg-slate-700 rounded-full p-1 transition-colors duration-300"
+            :class="{ 'bg-blue-600': modelValue }"
+        >
+            <div 
+                class="w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-300"
+                :class="{ 'translate-x-7': modelValue }"
+            ></div>
+        </button>
+
+        <span :class="color ? 'text-blue-400 font-bold' : 'text-slate-500'" class="text-sm transition-colors">
+            BLACK
         </span>
     </div>
 
