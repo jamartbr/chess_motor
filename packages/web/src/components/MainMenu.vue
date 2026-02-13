@@ -6,7 +6,7 @@ const props = defineProps<{
     color: Color;
 }>();
 
-const emit = defineEmits(['selectMode', 'update:modelValue']);
+const emit = defineEmits(['selectMode', 'update:modelValue', 'update:color']);
 </script>
 
 <template>
@@ -38,13 +38,13 @@ const emit = defineEmits(['selectMode', 'update:modelValue']);
         </span>
         
         <button 
-            @click="emit('update:modelValue', !modelValue)"
+            @click="emit('update:color', Color.White)"
             class="relative w-14 h-7 bg-slate-700 rounded-full p-1 transition-colors duration-300"
-            :class="{ 'bg-blue-600': modelValue }"
+            :class="{ 'bg-blue-600': color }"
         >
             <div 
                 class="w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-300"
-                :class="{ 'translate-x-7': modelValue }"
+                :class="{ 'translate-x-7': color }"
             ></div>
         </button>
 
