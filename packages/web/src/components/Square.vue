@@ -62,13 +62,6 @@ const onDrop = (e: DragEvent) => {
         @drop="onDrop"
         @click.stop="emit('click')"
     >
-        <!-- <div 
-            v-if="control !== null"
-            class="absolute inset-0 pointer-events-none transition-opacity duration-500"
-            :class="[
-                control === Color.White ? 'bg-blue-500/[0.08]' : 'bg-red-500/[0.08]'
-            ]"
-        ></div> -->
 
         <span v-if="(playerColor === Color.White ? (index & 7) === 0 : (index & 7) === 7)" 
             class="absolute left-0.5 top-0.5 text-[10px] font-bold select-none z-10"

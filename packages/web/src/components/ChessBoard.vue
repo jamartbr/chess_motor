@@ -154,19 +154,47 @@
     };
 
     const getPromotionStyle = (index: number) => {
-    const file = index & 7; // Columna (0-7)
-    const rank = index >> 4; // Fila (0 o 7)
-    
-    // Cada casilla mide 64px (512 / 8)
-    const left = file * 64;
-    
-    // Si es blanca (fila 7, arriba), lo pegamos arriba. 
-    // Si es negra (fila 0, abajo), lo pegamos abajo.
-    if (rank === 7) {
-        return { left: `${left}px`, top: '0px' };
-    } else {
-        return { left: `${left}px`, bottom: '0px' };
-    }
+        // const file = index & 7; // Columna (0-7)
+        // const rank = index >> 4; // Fila (0 o 7)
+        
+        // // Cada casilla mide 64px (512 / 8)
+        // const left = file * 64;
+        
+        // // Si es blanca (fila 7, arriba), lo pegamos arriba. 
+        // // Si es negra (fila 0, abajo), lo pegamos abajo.
+        // if (rank === 7) {
+        //     return { left: `${left}px`, top: '0px' };
+        // } else {
+        //     return { left: `${left}px`, bottom: '0px' };
+        // }
+        const file = index & 7; // Columna (0-7)
+        const rank = index >> 4; // Fila (0-7)
+        
+        // Ancho de una casilla: 560px / 8 = 70px
+        const squareSize = 70; 
+        
+        // Calculamos la posición X (siempre igual)
+        // Si el tablero está invertido (playerColor === Black), la columna 0 es la derecha
+        const xPos = props.playerColor === Color.White 
+            ? file * squareSize 
+            : (7 - file) * squareSize;
+
+        // Calculamos la posición Y
+        // Si coronas en la fila 7 (blancas), el selector debe nacer arriba y bajar
+        // Si coronas en la fila 0 (negras), el selector debe nacer abajo y subir
+        const isWhiteCoronating = rank === 7;
+        
+        if (props.playerColor === Color.White) {
+            // Vista normal: Fila 7 es arriba, Fila 0 es abajo
+            return isWhiteCoronating 
+                ? { left: `${xPos}px`, top: '0px' } 
+                : { left: `${xPos}px`, bottom: '0px', flexDirection: 'column-reverse' };
+        } else {
+            // Vista invertida: Fila 0 es arriba, Fila 7 es abajo
+            return isWhiteCoronating
+                ? { left: `${xPos}px`, bottom: '0px', flexDirection: 'column-reverse' }
+                : { left: `${xPos}px`, top: '0px' };
+        }
     };
 
     // Function to play chess sounds
@@ -202,14 +230,6 @@
             lastMove.value = { from: move.from, to: move.to };
         });
     }
-
-    // // Logic for copying link
-    // const copyText = ref('COPY GAME LINK');
-    // const copyLink = () => {
-    //     navigator.clipboard.writeText(window.location.href);
-    //     copyText.value = 'COPIED!';
-    //     setTimeout(() => copyText.value = 'COPY GAME LINK', 2000);
-    // };
 </script>
 
 <template>

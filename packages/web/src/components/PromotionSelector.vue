@@ -2,7 +2,10 @@
     import { PieceType, Color } from '@chess-motor/engine';
     import { PIECE_IMAGES } from '../assets/chessPieces';
 
-    const props = defineProps<{ color: Color }>();
+    const props = defineProps<{
+        color: Color;
+        style?: any;
+    }>();
     const emit = defineEmits(['select']);
 
     const options = [
@@ -18,7 +21,7 @@
     };
 </script>
 
-<template>
+<!-- <template>
     <div class="flex flex-col bg-white border-2 border-slate-600 shadow-[0_10px_30px_rgba(0,0,0,0.5)] rounded-md w-16 overflow-hidden">
         <button 
             v-for="opt in options" 
@@ -27,6 +30,22 @@
             class="w-16 h-16 flex items-center justify-center text-4xl hover:bg-blue-100 text-slate-900 border-b last:border-0 border-slate-200"
         >
             <img :src="getPieceImage(opt.type)" class="w-full h-full" />
+        </button>
+    </div>
+</template> -->
+
+<template>
+    <div 
+        class="absolute z-[110] flex flex-col bg-white border-2 border-slate-600 shadow-2xl rounded-md overflow-hidden"
+        :style="style"
+    >
+        <button 
+            v-for="opt in options" 
+            :key="opt.type"
+            @click.stop="emit('select', opt.type)"
+            class="w-[70px] h-[70px] flex items-center justify-center hover:bg-blue-100 border-b last:border-0 border-slate-200 p-2"
+        >
+            <img :src="getPieceImage(opt.type)" class="w-full h-full object-contain" />
         </button>
     </div>
 </template>
