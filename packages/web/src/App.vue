@@ -47,7 +47,7 @@
         socket.emit('find_match', { 
           mode: mode.toString(), 
           roomId: currentRoomId.value,
-          color: playerColor
+          color: playerColor.value
         });
         console.log("hola")
 
