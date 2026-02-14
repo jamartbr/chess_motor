@@ -20,6 +20,9 @@
 
   const currentRoomId = ref(getRoomId());
 
+  // Get random color
+  const getRandomColor = (): Color => (Math.random() < 0.5 ? Color.White : Color.Black);
+
   // Provide the socket instance and room ID to all child components
   // provide('chessSocket', socket);
   // provide('roomId', currentRoomId);
@@ -67,9 +70,8 @@
         // SINGLE PLAYER FLOW: Clear roles to allow full control
         currentGame.value = new Board();
         currentGame.value.mode = mode;
-        playerColor.value = color;
-
-        console.log(`inside startNewGame: color = ${color}`);
+        // Check if color selected, asign random color if not
+        playerColor.value = color ? color : getRandomColor();
     }
     
     // // 4. Assign to reactive ref
@@ -89,8 +91,8 @@
 
 </script>
 
-<template>
-  <main class="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+<template> 
+  <main class="h-screen overflow-hidden bg-slate-900 flex items-center justify-center p-4"> <!---->
   <MainMenu 
     v-if="!currentGame" 
     v-model="isMultiplayer"

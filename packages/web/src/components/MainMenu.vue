@@ -38,27 +38,6 @@ const options = [
         </span>
     </div>
 
-    <!-- <div class="flex items-center gap-4 bg-slate-900/50 p-4 rounded-2xl border border-slate-700">
-        <span :class="color === Color.White ? 'text-white font-bold' : 'text-slate-500'" class="text-sm transition-colors">
-            WHITE
-        </span>
-        
-        <button 
-            @click="emit('update:color', color === Color.White ? Color.Black : Color.White)"
-            class="relative w-14 h-7 bg-slate-700 rounded-full p-1 transition-colors duration-300"
-            :class="{ 'bg-blue-600': color === Color.Black }"
-        >
-            <div 
-                class="w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-300"
-                :class="{ 'translate-x-7': color === Color.Black }"
-            ></div>
-        </button>
-
-        <span :class="color === Color.Black ? 'text-blue-400 font-bold' : 'text-slate-500'" class="text-sm transition-colors">
-            BLACK
-        </span>
-    </div> -->
-
     <div class="flex bg-slate-900/80 p-1 rounded-xl border border-slate-700 shadow-inner">
         <button 
             v-for="opt in options" 
@@ -77,8 +56,6 @@ const options = [
       <h1 class="text-4xl font-black text-white tracking-tighter mb-2">CHESS MOTOR</h1>
       <p class="text-slate-400 text-sm italic">Select your battlefield</p>
     </div>
-
-    <p class="text-white">Debug: Current color is {{ color }}</p>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
       <button 
