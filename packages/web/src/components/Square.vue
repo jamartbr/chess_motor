@@ -23,10 +23,14 @@ const isLight = computed(() => {
     return (rank + file) % 2 !== 0;
 });
 
-// Calcular nombre de la coordenada (solo para mostrar en los bordes)
-const coordinateName = computed(() => {
-    const file = String.fromCharCode(97 + (props.index & 7)); // a-h
-    const rank = (props.index >> 4) + 1; // 1-8
+const coordinateName = computed<{ file: string; rank: number }>(() => {
+    const fileIdx = props.index & 7;
+    const rankIdx = props.index >> 4;
+    const isWhiteView = props.playerColor === Color.White;
+
+    const file = String.fromCharCode(97 + (isWhiteView ? fileIdx : 7 - fileIdx));
+    const rank = isWhiteView ? rankIdx + 1 : 8 - rankIdx;
+
     return { file, rank };
 });
 
@@ -66,13 +70,13 @@ const onDrop = (e: DragEvent) => {
             ]"
         ></div> -->
 
-        <span v-if="(index & 7) === 0" 
+        <span v-if="(playerColor === Color.White ? (index & 7) === 0 : (index & 7) === 7)" 
             class="absolute left-0.5 top-0.5 text-[10px] font-bold select-none z-10"
             :class="isLight ? 'text-[#779556]' : 'text-[#ebecd0]'">
             {{ coordinateName.rank }}
         </span>
 
-        <span v-if="(index >> 4) === 0" 
+        <span v-if="(playerColor === Color.White ? (index >> 4) === 0 : (index >> 4) === 7)" 
             class="absolute right-0.5 bottom-0.5 text-[10px] font-bold select-none z-10"
             :class="isLight ? 'text-[#779556]' : 'text-[#ebecd0]'">
             {{ coordinateName.file }}
