@@ -46,7 +46,8 @@
         // Tell server we want to play this specific mode
         socket.emit('find_match', { 
           mode: mode.toString(), 
-          roomId: currentRoomId.value 
+          roomId: currentRoomId.value,
+          color: playerColor
         });
         console.log("hola")
 
