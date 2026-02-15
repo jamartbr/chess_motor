@@ -138,7 +138,7 @@
             // 3. The piece matches the player's assigned color
             if (piece && 
                 piece.color === game.value.turn && 
-                piece.color === props.playerColor) {
+                (piece.color === props.playerColor || !props.isMultiplayer)) {
                 selectedSquare.value = index;
             }
         } else {
