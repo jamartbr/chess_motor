@@ -233,7 +233,7 @@
 </script>
 
 <template>
-    <div class="flex flex-col md:flex-row gap-8 items-start justify-center p-8 bg-slate-900">
+    <div class="flex flex-col md:flex-row gap-8 items-center justify-center p-4 w-full h-full max-h-full">
         
         <div class="relative">
             <div :key="moveKey" class="grid grid-cols-8 aspect-square w-[560px] border-[12px] border-slate-700 bg-slate-800 shadow-2xl">

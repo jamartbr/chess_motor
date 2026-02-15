@@ -34,12 +34,6 @@ const queues: Record<string, WaitingPlayer[]> = {
   'dominion': []
 };
 
-// // Store players waiting for each mode 
-// // Key: GameMode (e.g., 'classical', 'dominion'), Value: Socket ID
-// const waitingPlayers: Record<string, string | null> = {
-//   'classical': null,
-//   'dominion': null
-// };
 
 io.on('connection', (socket) => {
   console.log(`User connected: ${socket.id}`);
@@ -95,12 +89,6 @@ io.on('connection', (socket) => {
         // Notify both
         io.to(whiteId).emit('match_found', { roomId, role: 'w' });
         io.to(blackId).emit('match_found', { roomId, role: 'b' });
-
-        // // Start the game for both
-        // setTimeout(() => {
-        //   io.to(roomId).emit('game_ready');
-        // }, 100);
-        // console.log(`Match started in ${data.roomId} for mode ${mode}`);
       }
     } else {
       // NO OPPONENT: Put the player in the waiting line
@@ -111,17 +99,9 @@ io.on('connection', (socket) => {
   });
 
   socket.on('make_move', (data) => {
-    // // El servidor recibe el movimiento y lo envía a los DEMÁS en la misma sala
-    // socket.to(data.roomId).emit('opponent_move', data);
-    // console.log(`request to make move in room ${data.roomId}: from ${data.from} to ${data.to}`)
-    console.log(`Step 1: Server received move from ${socket.id} for room ${data.roomId}`);
-
-    // Check if the room actually has the opponent
-    const clients = io.sockets.adapter.rooms.get(data.roomId);
-    console.log(`Step 2: Room ${data.roomId} contains clients:`, Array.from(clients || []));
-
+    // El servidor recibe el movimiento y lo envía a los DEMÁS en la misma sala
     socket.to(data.roomId).emit('opponent_move', data);
-    console.log(`Step 3: Broadcast sent to room ${data.roomId}`);
+    console.log(`request to make move in room ${data.roomId}: from ${data.from} to ${data.to}`)
   });
 
   socket.on('disconnecting', () => {

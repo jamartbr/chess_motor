@@ -34,7 +34,7 @@
 
   const isWaiting = ref(false);
 
-  const startNewGame = (mode: GameMode, color: Color) => {
+  const startNewGame = (mode: GameMode, color: Color | null) => {
     
     // 1. Create a fresh board instance
     currentGame.value = new Board();
@@ -53,7 +53,8 @@
 
 
         // Listen for the match found event
-        socket.on('match_found', (data: { roomId: string, role: Color }) => {
+        // Use .once to prevent multiple listeners if player cancels and restarts
+        socket.once('match_found', (data: { roomId: string, role: Color }) => {
           isWaiting.value = false;
           
           // Initialize the game with the correct settings
@@ -72,11 +73,8 @@
         currentGame.value = new Board();
         currentGame.value.mode = mode;
         // Check if color selected, asign random color if not
-        playerColor.value = color ? color : getRandomColor();
+        playerColor.value = color ?? getRandomColor();
     }
-    
-    // // 4. Assign to reactive ref
-    // console.log("Starting game with mode:", mode); // Debug
   };
 
   // Listen for opponent moves
@@ -93,7 +91,7 @@
 </script>
 
 <template> 
-  <main class="h-screen overflow-hidden bg-slate-900 flex items-center justify-center p-4"> <!---->
+  <main class="h-screen w-screen bg-slate-900 flex items-center justify-center p-4 overflow-hidden"> <!---->
   <MainMenu 
     v-if="!currentGame" 
     v-model="isMultiplayer"
