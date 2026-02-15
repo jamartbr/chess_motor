@@ -88,6 +88,17 @@
     }
   });
 
+  const cancelSearch = () => {
+  isWaiting.value = false;
+  currentGame.value = null; // Esto hace que v-if="!currentGame" sea true y vuelva el MainMenu
+  
+  // Avisar al servidor para que limpie la cola de matchmaking
+  // socket.emit('cancel_search', { roomId: currentRoomId.value });
+  
+  // Limpiar el listener 'once' para evitar que se ejecute si entra alguien justo después
+  socket.off('match_found');
+};
+
 </script>
 
 <template> 
@@ -112,7 +123,10 @@
     <h2 class="text-2xl font-black text-white uppercase tracking-widest animate-pulse">
         Finding Opponent...
     </h2>
-    <button @click="isWaiting = false" class="mt-8 text-slate-500 hover:text-white uppercase text-xs font-bold">
+    <button 
+      @click="cancelSearch" 
+      class="mt-8 text-slate-500 hover:text-white uppercase text-xs font-bold"
+    >
         Cancel search
     </button>
 </div>
