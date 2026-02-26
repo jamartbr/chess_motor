@@ -140,7 +140,7 @@ io.on('connection', (socket) => {
   });
 });
 
-// const PORT = process.env.PORT || 3000;
-// httpServer.listen(PORT, () => {
-//   console.log(`Servidor multiplayer corriendo en puerto ${PORT}`);
-// });
+const PORT = process.env.PORT || 3000;
+httpServer.listen(PORT, () => {
+  console.log(`Servidor multiplayer corriendo en puerto ${PORT}`);
+});
