@@ -126,15 +126,21 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    // Limpiar colas
+    // Si estaba en una sala -> sacarle
+    socket.emit('')
+    
+  });
+
+  socket.on('cancel_search', (roomId) => {
+    // Filtra todas las colas
     for (const mode in queues) {
-      queues[mode] = queues[mode].filter(p => p.id !== socket.id);
+      queues[mode] = queues[mode].filter(wp => wp.id !== roomId);
     }
-    console.log(`User disconnected: ${socket.id} and removed from queues`);
+    console.log(`User ${socket.id} removed from queues`);
   });
 });
 
-const PORT = process.env.PORT || 3000;
-httpServer.listen(PORT, () => {
-  console.log(`Servidor multiplayer corriendo en puerto ${PORT}`);
-});
+// const PORT = process.env.PORT || 3000;
+// httpServer.listen(PORT, () => {
+//   console.log(`Servidor multiplayer corriendo en puerto ${PORT}`);
+// });

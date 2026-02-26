@@ -88,16 +88,32 @@
     }
   });
 
+  // Listen for opponent leaving
+  socket.on('opponent_left', () => {
+    currentGame.value = null;
+    playerColor.value = null;
+    // TODO: llevar al usuario de nuevo al menú principal
+  });
+
   const cancelSearch = () => {
-  isWaiting.value = false;
-  currentGame.value = null; // Esto hace que v-if="!currentGame" sea true y vuelva el MainMenu
-  
-  // Avisar al servidor para que limpie la cola de matchmaking
-  // socket.emit('cancel_search', { roomId: currentRoomId.value });
-  
-  // Limpiar el listener 'once' para evitar que se ejecute si entra alguien justo después
-  socket.off('match_found');
-};
+    isWaiting.value = false;
+    currentGame.value = null;
+    playerColor.value = null;
+    
+    // Avisar al servidor para que limpie la cola de matchmaking
+    socket.emit('cancel_search', { roomId: currentRoomId.value });
+    
+    // // Limpiar el listener 'once' para evitar que se ejecute si entra alguien justo después
+    // socket.off('match_found');    
+  };
+
+  const cancelMatch = () => {
+    currentGame.value = null;
+    playerColor.value = null;
+    
+    // Avisar al contrincante
+    socket.emit('opponent_left');   
+  };
 
 </script>
 
@@ -111,7 +127,7 @@
   />
     
     <div v-else class="flex flex-col items-center gap-4">
-        <button @click="currentGame = null" class="text-slate-500 hover:text-white text-xs uppercase font-bold tracking-widest">
+        <button @click="cancelMatch" class="text-slate-500 hover:text-white text-xs uppercase font-bold tracking-widest">
           ← Back to Menu
         </button>
         <ChessBoard :game="currentGame!" :player-color="playerColor" :is-multiplayer="isMultiplayer" :socket="socket" :room-id="currentRoomId" />
