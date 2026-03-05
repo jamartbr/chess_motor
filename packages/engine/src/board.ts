@@ -422,9 +422,6 @@ export class Board {
         const piece = { ...this.grid[from]! };
         let captured = this.grid[to];
 
-        // Generate SAN notation
-        const san = this.getSAN(from, to, piece, captured, promotionType);
-
         // Handle en passant capture
         if (piece?.type === PieceType.Pawn && to === this.enPassantSquare) {
             const capturedPawnIndex = piece.color === Color.White ? to - 16 : to + 16;
@@ -468,8 +465,13 @@ export class Board {
         // Update turn
         this.turn = this.turn === Color.White ? Color.Black : Color.White;
 
+        // Generate SAN notation
+        const san = this.getSAN(from, to, piece, captured, promotionType);
+        // console.log(san);
+
         // Update move history
         this.moveHistory.push(san);
+        console.log(`move made: ${san}`)
 
         return captured;
     }
@@ -515,7 +517,8 @@ export class Board {
         this.turn = this.turn === Color.White ? Color.Black : Color.White;
 
         // 7. Restore move history
-        this.moveHistory.pop();
+        let san = this.moveHistory.pop();
+        console.log(`move undone: ${san}`)
     }
 
     /**

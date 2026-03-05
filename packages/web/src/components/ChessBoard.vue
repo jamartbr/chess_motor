@@ -346,34 +346,45 @@
     </div>
 
     <div v-if="isFinished" class="absolute inset-0 z-[200] flex items-center justify-center bg-slate-900/80 backdrop-blur-sm transition-all animate-in fade-in duration-500">
-        <div class="bg-slate-800 p-10 rounded-2xl border-2 border-slate-600 shadow-[0_0_50px_rgba(0,0,0,0.5)] text-center flex flex-col items-center gap-6">
-            
-            <div class="space-y-2">
-                <h2 class="text-4xl font-black text-white uppercase tracking-tighter">
+    
+        <div class="relative bg-slate-800 p-12 min-w-[400px] rounded-2xl border-2 border-slate-600 shadow-[0_0_50px_rgba(0,0,0,0.5)] text-center flex flex-col items-center gap-8">
+    
+            <button 
+                @click="isFinished = false" 
+                class="absolute top-5 right-5 p-2 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-full transition-colors"
+                aria-label="Close"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+
+            <div class="space-y-3 pt-2"> <h2 class="text-5xl font-black text-white uppercase tracking-tighter leading-none">
                     {{ winner === 'Draw' ? "It's a Draw!" : (winner === Color.White ? 'White Victory' : 'Black Victory') }}
                 </h2>
-                <p v-if="game.mode === GameMode.Classical" class="text-slate-400 uppercase text-xs tracking-widest font-bold">
+                <p v-if="game.mode === GameMode.Classical" class="text-slate-400 uppercase text-xs tracking-[0.2em] font-bold">
                     By Checkmate
                 </p>
             </div>
             
-            <div v-if="game.mode === GameMode.Dominion" class="flex gap-8 items-center bg-slate-900/50 p-6 rounded-xl border border-slate-700">
+            <div v-if="game.mode === GameMode.Dominion" class="flex gap-10 items-center bg-slate-900/50 px-8 py-6 rounded-xl border border-slate-700 w-full justify-center">
                 <div class="text-center">
-                    <p class="text-[10px] text-slate-500 uppercase font-bold">Final White</p>
-                    <p class="text-3xl font-mono font-bold text-blue-400">{{ game.whiteControlPoints }}</p>
+                    <p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Final White</p>
+                    <p class="text-4xl font-mono font-bold text-blue-400">{{ game.whiteControlPoints }}</p>
                 </div>
-                <div class="text-xl text-slate-600 italic">vs</div>
+                <div class="text-xl text-slate-600 italic font-serif">vs</div>
                 <div class="text-center">
-                    <p class="text-[10px] text-slate-500 uppercase font-bold">Final Black</p>
-                    <p class="text-3xl font-mono font-bold text-red-400">{{ game.blackControlPoints }}</p>
+                    <p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Final Black</p>
+                    <p class="text-4xl font-mono font-bold text-red-400">{{ game.blackControlPoints }}</p>
                 </div>
             </div>
 
             <button 
                 @click="resetGame" 
-                class="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg transition-all transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-blue-500/40"
+                class="w-full sm:w-auto px-12 py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg transition-all transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-blue-500/40 uppercase tracking-widest"
             >
-                PLAY AGAIN
+                Play Again
             </button>
         </div>
     </div>
