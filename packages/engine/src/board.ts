@@ -1,19 +1,29 @@
 import { Color, PieceType, GameMode } from './types';
 import type { Piece } from './types';
 
-interface CastlingRights extends State {
-    whiteQueenSide: boolean;
-    whiteKingSide: boolean;
-    blackQueenSide: boolean;
-    blackKingSide: boolean;
+
+interface Move {
+  san: string; // "e4", "exd5+", etc.
+  number: number;
 }
 
 interface State {
     // turn: Color;
     // whiteControlPoints: number;
     // BlackControlPoints: number;
-    enPassant?: number | null;
-    promotion?: number | null;
+
+    // moves: Move[] = [];
+
+
+    // enPassant?: number | null;
+    // promotion?: number | null;
+}
+
+interface CastlingRights {
+    whiteQueenSide: boolean;
+    whiteKingSide: boolean;
+    blackQueenSide: boolean;
+    blackKingSide: boolean;
 }
 
 export class Board {
@@ -26,6 +36,78 @@ export class Board {
     // Convert row/column to the 0x88 index
     private getIndex(rank: number, file: number): number {
         return (rank << 4) | file;
+    }
+
+    // Convert 0x88 index to algebraic notation
+    private toAlgebraic(index: number): string {
+        const file = index & 7;
+        const rank = index >> 4;
+        return String.fromCharCode(97 + file) + (rank + 1);
+    }
+
+    // Generate SAN notation
+    private getSAN(from: number, to: number, piece: Piece, captured: Piece | null, promotionType?: PieceType): string {
+        // Castling
+        if (piece.type === PieceType.King) {
+            if (to - from === 2) return "O-O";
+            if (to - from === -2) return "O-O-O";
+        }
+
+        let san = "";
+
+        if (piece.type !== PieceType.Pawn) {
+            // Añadir inicial de la pieza (N, B, R, Q, K)
+            const char = piece.type === PieceType.Knight ? 'N' : piece.type.charAt(0).toUpperCase();
+            san += char;
+            
+            // TODO: desambiguación si dos piezas iguales llegan al mismo sitio
+        }
+
+        // Capture
+        if (captured || (piece.type === PieceType.Pawn && to === this.enPassantSquare)) {
+            if (piece.type === PieceType.Pawn) {
+                san += this.toAlgebraic(from)[0]; // Peón indica columna de origen: "exd5"
+            }
+            san += "x";
+        }
+
+        // Casilla destino
+        san += this.toAlgebraic(to);
+
+        // Promotion
+        if (promotionType && promotionType !== PieceType.Pawn && this.promotionSquare === to) {
+            const char = promotionType === PieceType.Knight ? 'N' : promotionType.charAt(0).toUpperCase();
+            san += "=" + char;
+        }
+
+        // Check for check or checkmate
+        const enemyColor = piece.color === Color.White ? Color.Black : Color.White;
+        const enemyKingIndex = this.findKing(enemyColor);
+        
+        if (this.isSquareAttacked(enemyKingIndex, piece.color)) {
+            san += "+"; // Check
+            
+            // Verify if it's checkmate by testing if enemy has legal moves
+            let hasLegalMoves = false;
+            for (let i = 0; i < 128; i++) {
+            if (this.isSquareOnBoard(i)) {
+                const enemyPiece = this.getPieceAt(i);
+                if (enemyPiece && enemyPiece.color === enemyColor) {
+                const moves = this.getLegalMoves(i);
+                if (moves.length > 0) {
+                    hasLegalMoves = true;
+                    break;
+                }
+                }
+            }
+            }
+            
+            if (!hasLegalMoves) {
+            san = san.slice(0, -1) + "#"; // Checkmate replaces check
+            }
+        }
+        
+        return san;
     }
 
     private setPiece(rank: number, file:number, type: PieceType, color: Color): void {
@@ -52,6 +134,9 @@ export class Board {
     //      - rights: interface with 4 boolean values, one for each rook/king castling right
     //      - enPassant: true if en passant capture is now plausible
     private stateStack: { rights: CastlingRights, enPassant: number | null, promotion: number | null }[] = [];
+
+    // Store movements
+    public moveHistory: string[] = [];
 
     public resetBoard(): void {
         this.grid.fill(null);
@@ -81,6 +166,9 @@ export class Board {
             // 4. Place Black's back rank
             this.setPiece(7, file, pieces[file]!, Color.Black);
         }
+
+        // Reset move history
+        this.moveHistory = [];
     }
 
     constructor() {
@@ -331,8 +419,11 @@ export class Board {
             promotion: this.promotionSquare 
         });
 
-        const piece = this.grid[from];
+        const piece = { ...this.grid[from]! };
         let captured = this.grid[to];
+
+        // Generate SAN notation
+        const san = this.getSAN(from, to, piece, captured, promotionType);
 
         // Handle en passant capture
         if (piece?.type === PieceType.Pawn && to === this.enPassantSquare) {
@@ -377,6 +468,9 @@ export class Board {
         // Update turn
         this.turn = this.turn === Color.White ? Color.Black : Color.White;
 
+        // Update move history
+        this.moveHistory.push(san);
+
         return captured;
     }
 
@@ -419,6 +513,9 @@ export class Board {
 
         // 6. Restore turn
         this.turn = this.turn === Color.White ? Color.Black : Color.White;
+
+        // 7. Restore move history
+        this.moveHistory.pop();
     }
 
     /**

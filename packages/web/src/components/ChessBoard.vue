@@ -1,5 +1,5 @@
 <script setup lang="ts">
-    import { ref, triggerRef, computed, inject } from 'vue';
+    import { ref, triggerRef, computed, inject, watch, nextTick } from 'vue';
     import { Board, Color, PieceType, GameMode } from '@chess-motor/engine';
     import Square from './Square.vue';
     import PromotionSelector from './PromotionSelector.vue';
@@ -48,6 +48,41 @@
         return indices;
     });
 
+    const scrollBox = ref(null);
+    const movePairs = computed(() => {
+        const history = props.game.moveHistory;
+        const pairs = [];
+        for (let i = 0; i < history.length; i += 2) {
+            pairs.push({
+            white: history[i],
+            black: history[i + 1] || ''
+            });
+        }
+        return pairs;
+    });
+
+    // Auto-scroll al último movimiento
+    watch(() => props.game.moveHistory.length, async () => {
+        await nextTick();
+        if (scrollBox.value) {
+            scrollBox.value.scrollTop = scrollBox.value.scrollHeight;
+        }
+    });
+    
+    // Download game movements
+    const downloadPGN = () => {
+        const content = movePairs.value
+            .map((p, i) => `${i + 1}. ${p.white} ${p.black}`)
+            .join(' ');
+        const blob = new Blob([content], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'partida.pgn';
+        a.click();
+    };
+
+
     const handleMove = async (from: number, to: number) => {
         const piece = game.value.getPieceAt(from);
         if (!piece) return;
@@ -67,7 +102,7 @@
     const executeMove = (from: number, to: number, promotion: PieceType = PieceType.Queen) => {
         if (game.value.getLegalMoves(from).includes(to)) {
             // 1. Check if there is a piece at the target before moving (to detect capture)
-            const isCapture = !!game.value.getPieceAt(to);
+            const isCapture = !!game.value.getPieceAt(to); // TODO: una exclamación o 2??
 
             // 2. Execute the move in the engine
             game.value.makeMove(from, to, promotion);
@@ -263,6 +298,20 @@
             </div>
         </div>
 
+        <div class="notation-panel">
+            <div class="moves-scroll" ref="scrollBox">
+            <div v-for="(pair, i) in movePairs" :key="i" class="move-row">
+                <span class="num">{{ i + 1 }}.</span>
+                <span class="white">{{ pair.white }}</span>
+                <span class="black">{{ pair.black }}</span>
+            </div>
+            </div>
+            
+            <button @click="downloadPGN" class="btn-download">
+            Descargar PGN
+            </button>
+        </div>
+
         <div class="w-64 flex flex-col gap-4">
             <div v-if="game.mode === GameMode.Dominion" class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-xl animate-in slide-in-from-right duration-500">
                 <h2 class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-4">Dominion Points</h2>
@@ -330,3 +379,30 @@
     </div>
 </template>
 
+<style scoped>
+.notation-panel {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 250px;
+  height: 300px;
+  background: #2c3e50;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  padding: 10px;
+}
+.moves-scroll {
+  flex-grow: 1;
+  overflow-y: auto;
+  font-family: monospace;
+}
+.move-row {
+  display: grid;
+  grid-template-columns: 30px 1fr 1fr;
+  padding: 4px 0;
+  border-bottom: 1px solid #3e4f5f;
+}
+.num { color: #95a5a6; }
+</style>
