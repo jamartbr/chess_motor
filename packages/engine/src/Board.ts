@@ -22,6 +22,12 @@ export class Board {
     enPassantSquare:  number | null = null;
     promotionSquare:  number | null = null;
 
+    /**
+     * Half-move clock for the 50-move rule.
+     * Increments every half-move; resets to 0 on any pawn move or capture.
+     */
+    halfMoveClock: number = 0;
+
     /** Accumulated territory points (Dominion mode only). */
     whiteControlPoints: number = 0;
     blackControlPoints: number = 0;
@@ -51,6 +57,7 @@ export class Board {
         this.castlingRights     = Board.defaultCastlingRights();
         this.enPassantSquare    = null;
         this.promotionSquare    = null;
+        this.halfMoveClock      = 0;
         this.whiteControlPoints = 0;
         this.blackControlPoints = 0;
         this.stateStack.length  = 0;

@@ -28,12 +28,14 @@ export function makeMove(
 
     // Save state
     board.stateStack.push({
-        rights:    { ...board.castlingRights },
-        enPassant: board.enPassantSquare,
-        promotion: board.promotionSquare,
+        rights:        { ...board.castlingRights },
+        enPassant:     board.enPassantSquare,
+        promotion:     board.promotionSquare,
+        halfMoveClock: board.halfMoveClock,
     });
 
     const piece: Piece    = { ...board.grid[from]! }; // copy so promotions don't mutate origin
+    const originalPieceTypeForClock = piece.type;     // snapshot before any mutation
     let captured: Piece | null = board.grid[to] ?? null;
 
     // En passant capture
@@ -57,6 +59,14 @@ export function makeMove(
     board.grid[to]   = piece;
     board.grid[from] = null;
 
+    // Half-move clock
+    // Resets on pawn moves and captures; increments otherwise.
+    if (originalPieceTypeForClock === PieceType.Pawn || captured !== null) {
+        board.halfMoveClock = 0;
+    } else {
+        board.halfMoveClock++;
+    }
+
     // En passant square update
     board.enPassantSquare = null;
     if (piece.type === PieceType.Pawn && Math.abs(to - from) === 32) {
@@ -66,7 +76,7 @@ export function makeMove(
     // Promotion
     board.promotionSquare = null;
     const rank = to >> 4;
-    const originalPieceType = piece.type;
+    const originalPieceType = piece.type; // snapshot before any mutation
     if (piece.type === PieceType.Pawn && (rank === 0 || rank === 7)) {
         piece.type            = promotionType;
         board.grid[to]        = piece;          // write promoted piece
@@ -74,7 +84,7 @@ export function makeMove(
     }
 
     // Castling rights
-    // Pass original type so a promoted pawn is never mistaken
+    // Pass original type so a promoted pawn is never mistaken for a King/Rook
     board.updateCastlingRights(from, to, { ...piece, type: originalPieceType });
 
     // Flip turn
@@ -132,6 +142,7 @@ export function undoMove(
     board.castlingRights  = { ...state.rights };
     board.promotionSquare = state.promotion;
     board.enPassantSquare = state.enPassant;
+    board.halfMoveClock   = state.halfMoveClock;
 
     // Move piece back
     board.grid[from] = movingPiece;

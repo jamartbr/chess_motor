@@ -33,6 +33,7 @@ export interface SavedState {
     rights:     CastlingRights;
     enPassant:  number | null;
     promotion:  number | null;
+    halfMoveClock: number;
 }
 
 /** A fully-described half-move, ready to apply or undo. */
