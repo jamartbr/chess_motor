@@ -66,6 +66,7 @@ export function makeMove(
     // Promotion
     board.promotionSquare = null;
     const rank = to >> 4;
+    const originalPieceType = piece.type;
     if (piece.type === PieceType.Pawn && (rank === 0 || rank === 7)) {
         piece.type            = promotionType;
         board.grid[to]        = piece;          // write promoted piece
@@ -73,16 +74,18 @@ export function makeMove(
     }
 
     // Castling rights
-    board.updateCastlingRights(from, to, piece);
+    // Pass original type so a promoted pawn is never mistaken
+    board.updateCastlingRights(from, to, { ...piece, type: originalPieceType });
 
     // Flip turn
     board.turn = board.enemy(board.turn);
 
     // Build record (SAN filled in by Notation layer, not here)
+    // Store original piece type so undoMove can reliably identify the piece
     const record: MoveRecord = {
         from,
         to,
-        piece,
+        piece: { ...piece, type: originalPieceType },
         captured,
         promotionType,
         san: '', // populated by Engine after the fact
@@ -113,9 +116,15 @@ export function undoMove(
     // The piece currently at `to` (may have been promoted)
     let movingPiece = board.grid[to];
 
-    // Revert promotion
-    // Use state.promotion (saved before the move) NOT board.promotionSquare
-    if (movingPiece && to === state.promotion) {
+    // Revert promotion:
+    // record.piece.type is always the *original* type (Pawn if a promotion occurred),
+    // so we detect a promotion when: the original piece was a Pawn, it moved to a
+    // back rank, and a non-Pawn promotionType was chosen.
+    const destRank = to >> 4;
+    const wasPromotion = piece.type === PieceType.Pawn
+        && (destRank === 0 || destRank === 7)
+        && (promotionType !== PieceType.Pawn && promotionType !== PieceType.King);
+    if (wasPromotion && movingPiece) {
         movingPiece = { ...movingPiece, type: PieceType.Pawn };
     }
 

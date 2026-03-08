@@ -244,8 +244,8 @@
                 </div>
             </div>
             
-            <button @click="downloadPGN" class="btn-download">
-                Descargar PGN
+            <button @click="downloadPGN" class="w-full px-4 py-3 bg-blue-700 hover:bg-blue-600 text-white font-bold rounded-lg transition-all transform hover:scale-105 active:scale-95 shadow-lg uppercase">
+            Descargar PGN
             </button>
         </div>
 
