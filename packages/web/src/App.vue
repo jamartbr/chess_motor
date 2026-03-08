@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { ref, triggerRef, provide } from 'vue';
-  import { GameMode, Board, Color } from '@chess-motor/engine';
+  import { GameMode, Engine, Color } from '@chess-motor/engine';
   import MainMenu from './components/MainMenu.vue';
   import ChessBoard from './components/ChessBoard.vue';
   import { io } from 'socket.io-client';
@@ -13,8 +13,6 @@
       const urlParams = new URLSearchParams(window.location.search);
       const room = urlParams.get('room');
       if (room) return room;
-      
-      // If no room in URL, create a random string
       return Math.random().toString(36).substring(2, 9);
   };
 
@@ -23,67 +21,45 @@
   // Get random color
   const getRandomColor = (): Color => (Math.random() < 0.5 ? Color.White : Color.Black);
 
-  // Provide the socket instance and room ID to all child components
-  // provide('chessSocket', socket);
-  // provide('roomId', currentRoomId);
-
-
   const isMultiplayer = ref(false);
   const playerColor = ref<Color | null>(null);
-  const currentGame = ref<any>(null);
+  const currentGame = ref<Engine | null>(null);
 
   const isWaiting = ref(false);
 
   const startNewGame = (mode: GameMode, color: Color | null) => {
-    
-    // 1. Create a fresh board instance
-    currentGame.value = new Board();
-    currentGame.value.mode = mode; // Inject the mode into the engine
 
     if (isMultiplayer.value) {
         // MULTIPLAYER FLOW: Join a room and wait for role assignment
         isWaiting.value = true;
-        // Tell server we want to play this specific mode
+        currentGame.value = new Engine(mode);
+
         socket.emit('find_match', { 
           mode: mode.toString(), 
           roomId: currentRoomId.value,
           color: playerColor.value
         });
-        console.log("hola")
 
-
-        // Listen for the match found event
-        // Use .once to prevent multiple listeners if player cancels and restarts
         socket.once('match_found', (data: { roomId: string, role: Color }) => {
           isWaiting.value = false;
-          
-          // Initialize the game with the correct settings
-          const newBoard = new Board();
-          newBoard.mode = currentGame.value.mode;
-          currentGame.value = newBoard;
+          currentGame.value = new Engine(mode);
           playerColor.value = data.role;
-          
-          // Update the room ID injected into ChessBoard
           currentRoomId.value = data.roomId;
           console.log("Match found! Joining room:", data.roomId);
           triggerRef(currentRoomId);
         });
     } else {
-        // SINGLE PLAYER FLOW: Clear roles to allow full control
-        currentGame.value = new Board();
-        currentGame.value.mode = mode;
-        // Check if color selected, asign random color if not
+        // SINGLE PLAYER FLOW
+        currentGame.value = new Engine(mode);
         playerColor.value = color ?? getRandomColor();
     }
   };
 
   // Listen for opponent moves
   socket.on('opponent_move', (data) => {
-    console.log("fuera")
     if (currentGame.value && isMultiplayer.value) {
-      currentGame.value.makeMove(data.from, data.to, data.promotion);
+      currentGame.value.move(data.from, data.to, data.promotion);
       triggerRef(currentGame);
-      console.log("dentro")
       // TODO: play the move sound here too
     }
   });
@@ -99,38 +75,36 @@
     isWaiting.value = false;
     currentGame.value = null;
     playerColor.value = null;
-    
-    // Avisar al servidor para que limpie la cola de matchmaking
     socket.emit('cancel_search', { roomId: currentRoomId.value });
-    
-    // // Limpiar el listener 'once' para evitar que se ejecute si entra alguien justo después
-    // socket.off('match_found');    
   };
 
   const cancelMatch = () => {
     currentGame.value = null;
     playerColor.value = null;
-    
-    // Avisar al contrincante
     socket.emit('opponent_left');   
   };
-
 </script>
 
 <template> 
-  <main class="h-screen w-screen bg-slate-900 flex items-center justify-center p-4 overflow-hidden"> <!---->
-  <MainMenu 
-    v-if="!currentGame" 
-    v-model="isMultiplayer"
-    v-model:color="playerColor"
-    @select-mode="startNewGame" 
-  />
+  <main class="h-screen w-screen bg-slate-900 flex items-center justify-center p-4 overflow-hidden">
+    <MainMenu 
+      v-if="!currentGame" 
+      v-model="isMultiplayer"
+      v-model:color="playerColor"
+      @select-mode="startNewGame" 
+    />
     
     <div v-else class="flex flex-col items-center gap-4">
         <button @click="cancelMatch" class="text-slate-500 hover:text-white text-xs uppercase font-bold tracking-widest">
           ← Back to Menu
         </button>
-        <ChessBoard :game="currentGame!" :player-color="playerColor" :is-multiplayer="isMultiplayer" :socket="socket" :room-id="currentRoomId" />
+        <ChessBoard 
+          :game="currentGame!" 
+          :player-color="playerColor" 
+          :is-multiplayer="isMultiplayer" 
+          :socket="socket" 
+          :room-id="currentRoomId" 
+        />
     </div>
   </main>
 
@@ -145,5 +119,5 @@
     >
         Cancel search
     </button>
-</div>
+  </div>
 </template>

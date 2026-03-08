@@ -27,7 +27,7 @@ export type { Piece, MoveRecord };
  */
 export class Engine {
 
-    private readonly board: Board;
+    public readonly board: Board;
 
     constructor(mode: GameMode = GameMode.Classical) {
         this.board      = new Board();
