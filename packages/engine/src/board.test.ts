@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Board } from './board';
+import { Board } from './Board';
 import { Color, PieceType } from './types';
 
 describe('Board Initialization', () => {
