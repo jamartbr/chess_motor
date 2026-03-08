@@ -93,17 +93,17 @@ export class Board {
             if (this.isSquareOnBoard(i)) {
                 const enemyPiece = this.getPieceAt(i);
                 if (enemyPiece && enemyPiece.color === enemyColor) {
-                const moves = this.getLegalMoves(i);
-                if (moves.length > 0) {
-                    hasLegalMoves = true;
-                    break;
-                }
+                    const moves = this.getLegalMoves(i);
+                    if (moves.length > 0) {
+                        hasLegalMoves = true;
+                        break;
+                    }
                 }
             }
             }
             
             if (!hasLegalMoves) {
-            san = san.slice(0, -1) + "#"; // Checkmate replaces check
+                san = san.slice(0, -1) + "#"; // Checkmate replaces check
             }
         }
         
@@ -128,6 +128,8 @@ export class Board {
 
     private enPassantSquare: number | null = null;
     private promotionSquare: number | null = null;
+    private isCheck: boolean = false;
+    private isMate: boolean = false;
 
     // States are stored in a stack
     // state 'attributes':
@@ -465,6 +467,12 @@ export class Board {
         // Update turn
         this.turn = this.turn === Color.White ? Color.Black : Color.White;
 
+        // Update isCheck & isMate
+        let playerColor = this.turn;
+        let enemyColor = this.turn === Color.White ? Color.Black : Color.White;
+        this.isCheck = this.isSquareAttacked(this.findKing(playerColor),enemyColor);
+        console.log(`Checking if ${playerColor} king is under attack: ${this.isCheck}`);
+
         // Generate SAN notation
         const san = this.getSAN(from, to, piece, captured, promotionType);
         // console.log(san);
@@ -518,7 +526,7 @@ export class Board {
 
         // 7. Restore move history
         let san = this.moveHistory.pop();
-        console.log(`move undone: ${san}`)
+        // console.log(`move undone: ${san}`)
     }
 
     /**
@@ -596,14 +604,14 @@ export class Board {
             // 1. Simulate move
             const captured = this.makeMove(fromIndex, toIndex);
 
-            // 2. Check if the king is under attack
+            // 2. Check if player's king is under attack
             const kingIndex = this.findKing(piece.color);
             const enemyColor = piece.color === Color.White ? Color.Black : Color.White;
             if (!this.isSquareAttacked(kingIndex, enemyColor)) {
                 legalMoves.push(toIndex);
             }
 
-            // 4. Undo move
+            // 3. Undo move
             this.undoMove(fromIndex, toIndex, captured);
         }
 
@@ -638,12 +646,20 @@ export class Board {
     }
 
     /**
-     * Determines the winner based on Dominion points.
+     * Determines the winner
      */
-    public getDominionWinner(): Color | 'Draw' {
-        if (this.whiteControlPoints > this.blackControlPoints) return Color.White;
-        if (this.blackControlPoints > this.whiteControlPoints) return Color.Black;
-        return 'Draw';
+    public getWinner(): Color | 'Draw' {
+        let playerColor = this.turn;
+        let enemyColor = playerColor === Color.White ? Color.Black : Color.White;
+        if (this.mode === GameMode.Classical) {
+            if (this.isSquareAttacked(this.findKing(playerColor), enemyColor)) return enemyColor;
+            if (this.isSquareAttacked(this.findKing(enemyColor), playerColor)) return playerColor;
+            return 'Draw';
+        } else {
+            if (this.whiteControlPoints > this.blackControlPoints) return Color.White;
+            if (this.blackControlPoints > this.whiteControlPoints) return Color.Black;
+            return 'Draw';
+        }
     }
 
     /**

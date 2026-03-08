@@ -113,7 +113,7 @@
             // 4. Check for game over
             if (game.value.isGameOver()) {
                 isFinished.value = true;
-                winner.value = game.value.getDominionWinner();
+                winner.value = game.value.getWinner();
                 // playSound(SOUNDS.GAME_END); // Add this to your sounds if you have it
             }
 
