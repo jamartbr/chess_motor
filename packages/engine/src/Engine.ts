@@ -282,7 +282,7 @@ export class Engine {
      *
      * Format: "<grid>|<turn>|<castling>"
      */
-    private positionKey(): string {
+    public positionKey(): string {
         let key = '';
         for (let i = 0; i < 128; i++) {
             if (!this.board.isOnBoard(i)) continue;
@@ -296,7 +296,7 @@ export class Engine {
     }
 
     /** Returns the 0x88 index of the first piece matching type+color, or null. */
-    private findPieceSquare(type: PieceType, color: Color): number | null {
+    public findPieceSquare(type: PieceType, color: Color): number | null {
         for (let i = 0; i < 128; i++) {
             if (!this.board.isOnBoard(i)) continue;
             const p = this.board.grid[i];
