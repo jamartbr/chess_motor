@@ -157,32 +157,35 @@ io.on('connection', (socket) => {
    * Notifies any active opponent and removes the player from matchmaking queues.
    */
   socket.on('disconnecting', () => {
-      console.log(`[disconnecting] ${socket.id}`);
+    console.log(`[disconnecting] ${socket.id}`);
 
-      // 1. Remove from matchmaking queues (was still waiting, not yet matched)
-      removeFromQueues(socket.id);
+    // 1. Remove from matchmaking queues (was still waiting, not yet matched)
+    const wasWaiting = removeFromQueues(socket.id);
+    
+    if (!wasWaiting) {
 
       // 2. Notify any opponent in active game rooms
       for (const room of socket.rooms) {
-          if (!room.startsWith('room-')) continue;
+        if (!room.startsWith('room-')) continue;
 
-          const clients = io.sockets.adapter.rooms.get(room);
-          if (!clients) continue;
+        const clients = io.sockets.adapter.rooms.get(room);
+        if (!clients) continue;
 
-          for (const clientId of clients) {
-              if (clientId === socket.id) continue;
+        for (const clientId of clients) {
+            if (clientId === socket.id) continue;
 
-              const opponentSocket = io.sockets.sockets.get(clientId);
-              if (!opponentSocket) continue;
+            const opponentSocket = io.sockets.sockets.get(clientId);
+            if (!opponentSocket) continue;
 
-              opponentSocket.emit('opponent_left', {
-                  roomId: room,
-                  reason: 'opponent_disconnected',
-              });
-              opponentSocket.leave(room);
-              console.log(`[disconnecting] Notified ${clientId} in room ${room}`);
-          }
+            opponentSocket.emit('opponent_left', {
+                roomId: room,
+                reason: 'opponent_disconnected',
+            });
+            opponentSocket.leave(room);
+            console.log(`[disconnecting] Notified ${clientId} in room ${room}`);
+        }
       }
+    }
   });
 
   // Disconnect
