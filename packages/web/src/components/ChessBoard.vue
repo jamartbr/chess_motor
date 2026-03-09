@@ -93,7 +93,7 @@
     const executeMove = (from: number, to: number, promotion: PieceType = PieceType.Queen) => {
         if (!game.value.getLegalMoves(from).includes(to)) return;
 
-        // Apply move via Engine — returns MoveRecord, updates history internally
+        // Apply move via Engine -> returns MoveRecord, updates history internally
         const move = game.value.move(from, to, promotion);
 
         // Detect capture
@@ -106,7 +106,7 @@
             // TODO: playSound(SOUNDS.GAME_END);
         }
 
-        // After move, it's the opponent's turn — check if their king is in check
+        // After move, it's the opponent's turn -> check if their king is in check
         const isCheck = game.value.isCheck();
 
         // Play appropriate sound

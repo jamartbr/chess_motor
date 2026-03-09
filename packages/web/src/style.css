@@ -1,9 +1,7 @@
 @import "tailwindcss";
 
 img {
-  /* Evita que el usuario seleccione la imagen accidentalmente */
   -webkit-user-drag: none; 
-  /* Un sutil sombreado para dar profundidad */
   filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
   transition: transform 0.1s ease;
 }

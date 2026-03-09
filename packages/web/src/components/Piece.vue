@@ -13,8 +13,7 @@
   }>();
 
   const imageSrc = computed(() => {
-    const c = props.color === Color.White ? 'w' : 'b';
-    // Mapeamos tu enum PieceType a las letras del objeto (P, N, B, R, Q, K)
+    const c = props.color === Color.White ? 'white' : 'black';
     const t = props.type; 
     return PIECE_IMAGES[`${c}${t}`] || '';
   });

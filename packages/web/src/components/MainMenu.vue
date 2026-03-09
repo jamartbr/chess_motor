@@ -2,7 +2,7 @@
 import { Color, GameMode } from '@chess-motor/engine';
 
 defineProps<{
-    modelValue: boolean; // This will bind to isMultiplayerMode
+    modelValue: boolean;
     color: Color | null;
 }>();
 
