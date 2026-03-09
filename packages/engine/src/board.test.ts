@@ -851,7 +851,6 @@ describe('Draw — Threefold Repetition', () => {
         engine.move(0x64, 0x54);
         // After 2 round-trips the starting position has been seen 3 times
         repeatPosition(engine, 2);
-        // expect(engine.positionHistory).toBe(0);
         expect(engine.isThreefoldRepetition()).toBe(true);
     });
 

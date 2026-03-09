@@ -93,11 +93,11 @@
     const executeMove = (from: number, to: number, promotion: PieceType = PieceType.Queen) => {
         if (!game.value.getLegalMoves(from).includes(to)) return;
 
-        // Detect capture before moving
-        const isCapture = !!game.value.getPiece(to);
-
         // Apply move via Engine — returns MoveRecord, updates history internally
-        game.value.move(from, to, promotion);
+        const move = game.value.move(from, to, promotion);
+
+        // Detect capture
+        const isCapture = !!move.captured;
 
         // Check game over
         if (game.value.isGameOver()) {
