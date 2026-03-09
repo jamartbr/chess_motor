@@ -7,17 +7,17 @@
 // Game
 
 export const enum Color {
-  White = 'w',
-  Black = 'b'
+  White = 'white',
+  Black = 'black'
 }
 
 export const enum PieceType {
-  Pawn = 'p',
-  Knight = 'n',
-  Bishop = 'b',
-  Rook = 'r',
-  Queen = 'q',
-  King = 'k'
+  Pawn   = 'pawn',
+  Knight = 'knight',
+  Bishop = 'bishop',
+  Rook   = 'rook',
+  Queen  = 'queen',
+  King   = 'king',
 }
 
 export interface Piece {
