@@ -81,13 +81,8 @@ const colorOptions = [
         @click="emit('selectMode', GameMode.Analysis, color)"
         class="group relative flex flex-col p-6 bg-amber-900/30 hover:bg-amber-800/40 rounded-2xl border-b-4 border-amber-900 active:border-b-0 active:translate-y-1 transition-all transform hover:scale-105 active:scale-95"
       >
-        <div class="flex items-center gap-2 mb-2">
-          <span class="text-xl font-bold text-amber-100">Analysis</span>
-          <span class="text-[10px] font-bold uppercase tracking-widest text-amber-400 bg-amber-900/60 px-1.5 py-0.5 rounded-full border border-amber-700">NEW</span>
-        </div>
-        <p class="text-xs text-amber-200/60 text-left">
-          Click any piece to see legal moves with score impact / forced mates labels.
-        </p>
+        <span class="text-xl font-bold text-blue-100 mb-2">Analysis</span>
+        <p class="text-xs text-blue-200/60 text-left">Click any piece to see legal moves with score impact / forced mates labels.</p>
       </button>
     </div>
   </div>

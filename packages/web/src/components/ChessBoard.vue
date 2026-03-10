@@ -48,15 +48,28 @@ const boardIndices = computed(() => {
 });
 
 const scrollBox = ref<HTMLElement | null>(null);
+
+/**
+ * props.game.moveHistory is a plain array inside a non-reactive Engine.
+ * Vue cannot track mutations to it through shallowRef, so movePairs and
+ * downloadPGN always saw a stale (empty) snapshot.
+ * We mirror it into a local ref and call syncHistory() after every move,
+ * making movePairs reliably reactive.
+ */
+const moveHistoryMirror = ref<string[]>([]);
+const syncHistory = () => {
+  moveHistoryMirror.value = [...props.game.moveHistory];
+};
+
 const movePairs = computed(() => {
-  const history = props.game.moveHistory;
+  const history = moveHistoryMirror.value;
   const pairs = [];
   for (let i = 0; i < history.length; i += 2)
     pairs.push({ white: history[i]!, black: history[i + 1] ?? '' });
   return pairs;
 });
 
-watch(() => props.game.moveHistory.length, async () => {
+watch(() => moveHistoryMirror.value.length, async () => {
   await nextTick();
   if (scrollBox.value)
     scrollBox.value.scrollTop = scrollBox.value.scrollHeight;
@@ -122,6 +135,7 @@ const executeMove = (from: number, to: number, promotion: PieceType = PieceType.
   // Update UI state
   moveKey.value++;
   triggerRef(game);
+  syncHistory();
   lastMove.value = { from, to };
   pendingPromotion.value = null;
   // Clear selection & analysis highlights after executing
@@ -191,7 +205,7 @@ const onSquareClick = (index: number) => {
   }
 };
 
-const SQUARE_SIZE = 65;
+const SQUARE_SIZE = 70;
 
 const getPromotionStyle = (index: number) => {
   const file = index & 7;
@@ -228,12 +242,14 @@ const resetGame = () => {
   winner.value           = null;
   moveKey.value++;
   triggerRef(game);
+  syncHistory();
 };
 
 // Register socket listener with cleanup to prevent leaks
 if (props.socket) {
   const onOpponentMove = (move: { from: number; to: number }) => {
     lastMove.value = { from: move.from, to: move.to };
+    syncHistory();
   };
   props.socket.on('opponent_move', onOpponentMove);
   onUnmounted(() => {
