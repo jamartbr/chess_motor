@@ -277,10 +277,9 @@ export class Engine {
 
     /**
      * Produces a compact string that uniquely identifies the current position,
-     * including side to move and castling rights (en-passant square is omitted
-     * for simplicity — this is a slight inaccuracy but acceptable in practice).
+     * including side to move, castling rights and en-passant square.
      *
-     * Format: "<grid>|<turn>|<castling>"
+     * Format: "<grid>|<turn>|<castling>|<enPassant>"
      */
     public positionKey(): string {
         let key = '';
@@ -292,6 +291,7 @@ export class Engine {
         const r = this.board.castlingRights;
         key += `|${this.board.turn[0]}`;
         key += `|${r.whiteKingSide ? 'K' : ''}${r.whiteQueenSide ? 'Q' : ''}${r.blackKingSide ? 'k' : ''}${r.blackQueenSide ? 'q' : ''}`;
+        key += `|${this.board.enPassantSquare ?? '-'}`
         return key;
     }
 
