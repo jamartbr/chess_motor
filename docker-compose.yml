@@ -1,0 +1,88 @@
+version: "3.9"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Chess Motor — Docker Compose
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# Services:
+#   engine   — Node.js REST API (TypeScript engine + Express server)
+#   api      — Python FastAPI gateway (OpenAPI docs at :8000/docs)
+#   web      — Vue 3 frontend (Vite dev server / Nginx in production)
+#
+# Quick start:
+#   docker-compose up --build
+#
+# URLs:
+#   Frontend     → http://localhost:5173
+#   Python API   → http://localhost:8000
+#   OpenAPI docs → http://localhost:8000/docs
+#   Engine API   → http://localhost:3000 (internal; exposed for debugging)
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── Node.js Engine Server ──────────────────────────────────────────────────
+  engine:
+    build:
+      context: ./packages/server
+      dockerfile: Dockerfile
+    container_name: chess_engine
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - chess_net
+
+  # ── Python FastAPI Gateway ─────────────────────────────────────────────────
+  api:
+    build:
+      context: ./packages/python-api
+      dockerfile: Dockerfile
+    container_name: chess_api
+    restart: unless-stopped
+    environment:
+      - ENGINE_URL=http://engine:3000
+    ports:
+      - "8000:8000"
+    depends_on:
+      engine:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - chess_net
+
+  # ── Vue 3 Frontend ─────────────────────────────────────────────────────────
+  web:
+    build:
+      context: ./packages/web
+      dockerfile: Dockerfile
+    container_name: chess_web
+    restart: unless-stopped
+    environment:
+      - VITE_ENGINE_URL=http://localhost:3000
+      - VITE_API_URL=http://localhost:8000
+    ports:
+      - "5173:80"
+    depends_on:
+      - engine
+      - api
+    networks:
+      - chess_net
+
+networks:
+  chess_net:
+    driver: bridge
