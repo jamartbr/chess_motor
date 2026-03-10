@@ -35,7 +35,7 @@ export function makeMove(
     });
 
     const piece: Piece    = { ...board.grid[from]! }; // copy so promotions don't mutate origin
-    const originalPieceTypeForClock = piece.type;     // snapshot before any mutation
+    const originalPieceType = piece.type;     // snapshot before any mutation
     let captured: Piece | null = board.grid[to] ?? null;
 
     // En passant capture
@@ -61,7 +61,7 @@ export function makeMove(
 
     // Half-move clock
     // Resets on pawn moves and captures; increments otherwise.
-    if (originalPieceTypeForClock === PieceType.Pawn || captured !== null) {
+    if (originalPieceType === PieceType.Pawn || captured !== null) {
         board.halfMoveClock = 0;
     } else {
         board.halfMoveClock++;
@@ -76,7 +76,6 @@ export function makeMove(
     // Promotion
     board.promotionSquare = null;
     const rank = to >> 4;
-    const originalPieceType = piece.type; // snapshot before any mutation
     if (piece.type === PieceType.Pawn && (rank === 0 || rank === 7)) {
         piece.type            = promotionType;
         board.grid[to]        = piece;          // write promoted piece
@@ -143,16 +142,18 @@ export function undoMove(
     board.promotionSquare = state.promotion;
     board.enPassantSquare = state.enPassant;
     board.halfMoveClock   = state.halfMoveClock;
-
+    
     // Move piece back
     board.grid[from] = movingPiece;
-    board.grid[to]   = captured;
 
     // En passant: restore captured pawn
-    if (piece.type === PieceType.Pawn && to === state.enPassant) {
-        board.grid[to] = null; // destination was empty before the capture
+    const wasEnPassantCapture = piece.type === PieceType.Pawn && to === state.enPassant;
+    if (wasEnPassantCapture) {
+        board.grid[to] = null;
         const capturedPawnIdx = piece.color === Color.White ? to - 16 : to + 16;
         board.grid[capturedPawnIdx] = captured;
+    } else {
+        board.grid[to] = captured;
     }
 
     // Castling: put rook back
