@@ -15,6 +15,7 @@ export enum PieceType {
 export enum GameMode {
     Classical = 'classical',
     Dominion  = 'dominion',
+    Analysis  = 'analysis',
 }
 
 export interface Piece {
@@ -30,9 +31,9 @@ export interface CastlingRights {
 }
 
 export interface SavedState {
-    rights:     CastlingRights;
-    enPassant:  number | null;
-    promotion:  number | null;
+    rights:        CastlingRights;
+    enPassant:     number | null;
+    promotion:     number | null;
     halfMoveClock: number;
 }
 
