@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Engine } from './Engine';
 import { Color, PieceType, GameMode } from './types';
+import { analyseSquare } from './Analyzer';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -17,8 +18,12 @@ const grid = (engine: Engine) => rawBoard(engine).grid as any[];
  * so that SAN generation (check/checkmate detection) never calls findKing(-1).
  * Kings are placed on a8/h8 by default — far from the action in most tests.
  */
-const place = (engine: Engine, index: number, type: PieceType, color: Color) => {
+const place = (engine: Engine, index: number, type: PieceType, color: Color,
+               whiteKingIndex: number = 0x70, blackKingIndex: number = 0x77) => {
     grid(engine).fill(null);
+    // Sentinel kings — keep them out of the way on the back rank corners
+    grid(engine)[whiteKingIndex] = { type: PieceType.King, color: Color.White };
+    grid(engine)[blackKingIndex] = { type: PieceType.King, color: Color.Black };
     grid(engine)[index] = { type, color };
 };
 
@@ -110,8 +115,11 @@ describe('Knight Moves', () => {
     it('should have only 2 moves from a corner', () => {
         const engine = new Engine();
         const corners = [0x00, 0x70, 0x07, 0x77];
+        // Kings are placed on a3 and f6
+        const whiteKingIndex = 0x22; // a3
+        const blackKingIndex = 0x55; // f6
         for (const corner of corners) {
-            place(engine, corner, PieceType.Knight, Color.White);
+            place(engine, corner, PieceType.Knight, Color.White, whiteKingIndex, blackKingIndex);
             expect(engine.getLegalMoves(corner).length).toBe(2);
         }
     });
@@ -154,18 +162,21 @@ describe('Knight Moves', () => {
 
     it('should have only 6 moves from next to a border and close to another', () => {
         const engine = new Engine();
+        // Kings are placed on b7 and g7
+        const whiteKingIndex = 0x16; // b7
+        const blackKingIndex = 0x66; // g7
         for (let offset = 2; offset < 6; offset++) {
             // c2-f2
-            place(engine, 0x10+offset, PieceType.Knight, Color.White);
+            place(engine, 0x10+offset, PieceType.Knight, Color.White, whiteKingIndex, blackKingIndex);
             expect(engine.getLegalMoves(0x10+offset).length).toBe(6);
             // c6-f6
-            place(engine, 0x60+offset, PieceType.Knight, Color.White);
+            place(engine, 0x60+offset, PieceType.Knight, Color.White, whiteKingIndex, blackKingIndex);
             expect(engine.getLegalMoves(0x60+offset).length).toBe(6);
             // b3-b6
-            place(engine, 0x01+offset*16, PieceType.Knight, Color.White);
+            place(engine, 0x01+offset*16, PieceType.Knight, Color.White, whiteKingIndex, blackKingIndex);
             expect(engine.getLegalMoves(0x01+offset*16).length).toBe(6);
             // f3-f6
-            place(engine, 0x06+offset*16, PieceType.Knight, Color.White);
+            place(engine, 0x06+offset*16, PieceType.Knight, Color.White, whiteKingIndex, blackKingIndex);
             expect(engine.getLegalMoves(0x06+offset*16).length).toBe(6);
         }
     });
@@ -184,6 +195,8 @@ describe('Knight Moves', () => {
     it('should not capture a friendly piece', () => {
         const engine = new Engine();
         grid(engine).fill(null);
+        grid(engine)[0x70] = { type: PieceType.King, color: Color.White };
+        grid(engine)[0x77] = { type: PieceType.King, color: Color.Black };
         grid(engine)[0x00] = { type: PieceType.Knight, color: Color.White };
         grid(engine)[0x12] = { type: PieceType.Pawn,   color: Color.White }; // friendly blocker
         const moves = engine.getLegalMoves(0x00);
@@ -193,6 +206,8 @@ describe('Knight Moves', () => {
     it('should capture an enemy piece', () => {
         const engine = new Engine();
         grid(engine).fill(null);
+        grid(engine)[0x70] = { type: PieceType.King, color: Color.White };
+        grid(engine)[0x77] = { type: PieceType.King, color: Color.Black };
         grid(engine)[0x00] = { type: PieceType.Knight, color: Color.White };
         grid(engine)[0x12] = { type: PieceType.Pawn,   color: Color.Black };
         const moves = engine.getLegalMoves(0x00);
@@ -227,21 +242,24 @@ describe('Bishop Moves', () => {
     it('should slide diagonally until blocked by a friendly piece', () => {
         const engine = new Engine();
         grid(engine).fill(null);
+        grid(engine)[0x70] = { type: PieceType.King, color: Color.White };
+        grid(engine)[0x77] = { type: PieceType.King, color: Color.Black };
         grid(engine)[0x00] = { type: PieceType.Bishop, color: Color.White };
-        grid(engine)[0x33] = { type: PieceType.Pawn,   color: Color.White }; // blocker
+        grid(engine)[0x33] = { type: PieceType.Pawn,   color: Color.White }; // friendly blocker at d4
         const moves = engine.getLegalMoves(0x00);
-        // Should reach 0x11, 0x22, but NOT 0x33 (friendly) or beyond
         expect(moves).toContain(0x11);
         expect(moves).toContain(0x22);
-        expect(moves).not.toContain(0x33);
-        expect(moves).not.toContain(0x44);
+        expect(moves).not.toContain(0x33); // friendly — cannot capture
+        expect(moves).not.toContain(0x44); // beyond blocker
     });
 
     it('should capture an enemy piece but not pass through it', () => {
         const engine = new Engine();
         grid(engine).fill(null);
+        grid(engine)[0x70] = { type: PieceType.King, color: Color.White };
+        grid(engine)[0x77] = { type: PieceType.King, color: Color.Black };
         grid(engine)[0x00] = { type: PieceType.Bishop, color: Color.White };
-        grid(engine)[0x22] = { type: PieceType.Pawn,   color: Color.Black }; // enemy blocker
+        grid(engine)[0x22] = { type: PieceType.Pawn,   color: Color.Black }; // enemy at c3
         const moves = engine.getLegalMoves(0x00);
         expect(moves).toContain(0x22);
         expect(moves).not.toContain(0x33); // blocked beyond capture
@@ -267,15 +285,19 @@ describe('Rook Moves', () => {
 
     it('should have 14 moves from a corner (a1)', () => {
         const engine = new Engine();
-        place(engine, 0x00, PieceType.Rook, Color.White);
+        // White King is placed on b7
+        const whiteKingIndex = 0x16; // b7
+        place(engine, 0x00, PieceType.Rook, Color.White, whiteKingIndex);
         expect(engine.getLegalMoves(0x00).length).toBe(14);
     });
 
     it('should slide until blocked by a friendly piece', () => {
         const engine = new Engine();
         grid(engine).fill(null);
+        grid(engine)[0x70] = { type: PieceType.King, color: Color.White };
+        grid(engine)[0x77] = { type: PieceType.King, color: Color.Black };
         grid(engine)[0x00] = { type: PieceType.Rook, color: Color.White };
-        grid(engine)[0x30] = { type: PieceType.Pawn, color: Color.White }; // blocker at a4
+        grid(engine)[0x30] = { type: PieceType.Pawn, color: Color.White }; // friendly at a4
         const moves = engine.getLegalMoves(0x00);
         expect(moves).toContain(0x10); // a2
         expect(moves).toContain(0x20); // a3
@@ -286,8 +308,10 @@ describe('Rook Moves', () => {
     it('should capture an enemy piece but not pass through it', () => {
         const engine = new Engine();
         grid(engine).fill(null);
+        grid(engine)[0x70] = { type: PieceType.King, color: Color.White };
+        grid(engine)[0x77] = { type: PieceType.King, color: Color.Black };
         grid(engine)[0x00] = { type: PieceType.Rook, color: Color.White };
-        grid(engine)[0x30] = { type: PieceType.Pawn,   color: Color.Black }; // enemy blocker
+        grid(engine)[0x30] = { type: PieceType.Pawn, color: Color.Black }; // enemy at a4
         const moves = engine.getLegalMoves(0x00);
         expect(moves).toContain(0x30);
         expect(moves).not.toContain(0x40); // blocked beyond capture
@@ -313,16 +337,21 @@ describe('Queen Moves', () => {
 
     it('should have 21 moves from a corner (a1)', () => {
         const engine = new Engine();
-        place(engine, 0x00, PieceType.Queen, Color.White);
+        // Kings are placed on b7 and g8
+        const whiteKingIndex = 0x16; // b7
+        const blackKingIndex = 0x76; // g8
+        place(engine, 0x00, PieceType.Queen, Color.White, whiteKingIndex, blackKingIndex);
         expect(engine.getLegalMoves(0x00).length).toBe(21);
     });
 
     it('should slide until blocked by a friendly piece', () => {
         const engine = new Engine();
         grid(engine).fill(null);
+        grid(engine)[0x70] = { type: PieceType.King, color: Color.White };
+        grid(engine)[0x77] = { type: PieceType.King, color: Color.Black };
         grid(engine)[0x00] = { type: PieceType.Queen, color: Color.White };
-        grid(engine)[0x33] = { type: PieceType.Pawn, color: Color.White }; // blocker at a4
-        grid(engine)[0x30] = { type: PieceType.Pawn, color: Color.White }; // blocker at a4
+        grid(engine)[0x33] = { type: PieceType.Pawn, color: Color.White }; // diagonal blocker
+        grid(engine)[0x30] = { type: PieceType.Pawn, color: Color.White }; // straight blocker
         const moves = engine.getLegalMoves(0x00);
         expect(moves).toContain(0x11);  // b1
         expect(moves).toContain(0x22);  // c2
@@ -337,9 +366,11 @@ describe('Queen Moves', () => {
     it('should capture an enemy piece but not pass through it', () => {
         const engine = new Engine();
         grid(engine).fill(null);
+        grid(engine)[0x70] = { type: PieceType.King, color: Color.White };
+        grid(engine)[0x77] = { type: PieceType.King, color: Color.Black };
         grid(engine)[0x00] = { type: PieceType.Queen, color: Color.White };
-        grid(engine)[0x22] = { type: PieceType.Pawn,   color: Color.Black }; // enemy blocker
-        grid(engine)[0x30] = { type: PieceType.Pawn,   color: Color.Black }; // enemy blocker
+        grid(engine)[0x22] = { type: PieceType.Pawn, color: Color.Black }; // diagonal enemy
+        grid(engine)[0x30] = { type: PieceType.Pawn, color: Color.Black }; // straight enemy
         const moves = engine.getLegalMoves(0x00);
         expect(moves).toContain(0x22);
         expect(moves).not.toContain(0x33); // blocked beyond capture
@@ -371,6 +402,8 @@ describe('Pawn Moves', () => {
     it('should not move forward into an occupied square', () => {
         const engine = new Engine();
         grid(engine).fill(null);
+        grid(engine)[0x70] = { type: PieceType.King, color: Color.White };
+        grid(engine)[0x77] = { type: PieceType.King, color: Color.Black };
         grid(engine)[0x10] = { type: PieceType.Pawn, color: Color.White };
         grid(engine)[0x20] = { type: PieceType.Pawn, color: Color.Black }; // blocker
         expect(engine.getLegalMoves(0x10).length).toBe(0);
@@ -379,6 +412,8 @@ describe('Pawn Moves', () => {
     it('should not allow the 2-square move if the first square is blocked', () => {
         const engine = new Engine();
         grid(engine).fill(null);
+        grid(engine)[0x70] = { type: PieceType.King, color: Color.White };
+        grid(engine)[0x77] = { type: PieceType.King, color: Color.Black };
         grid(engine)[0x10] = { type: PieceType.Pawn, color: Color.White };
         grid(engine)[0x20] = { type: PieceType.Pawn, color: Color.Black }; // blocks a3
         const moves = engine.getLegalMoves(0x10);
@@ -388,6 +423,8 @@ describe('Pawn Moves', () => {
     it('should allow a diagonal capture', () => {
         const engine = new Engine();
         grid(engine).fill(null);
+        grid(engine)[0x70] = { type: PieceType.King, color: Color.White };
+        grid(engine)[0x77] = { type: PieceType.King, color: Color.Black };
         grid(engine)[0x10] = { type: PieceType.Pawn, color: Color.White }; // a2
         grid(engine)[0x21] = { type: PieceType.Pawn, color: Color.Black }; // b3 — capturable
         const moves = engine.getLegalMoves(0x10);
@@ -397,6 +434,8 @@ describe('Pawn Moves', () => {
     it('should not allow capturing a friendly piece diagonally', () => {
         const engine = new Engine();
         grid(engine).fill(null);
+        grid(engine)[0x70] = { type: PieceType.King, color: Color.White };
+        grid(engine)[0x77] = { type: PieceType.King, color: Color.Black };
         grid(engine)[0x10] = { type: PieceType.Pawn, color: Color.White };
         grid(engine)[0x21] = { type: PieceType.Pawn, color: Color.White }; // friendly
         const moves = engine.getLegalMoves(0x10);
@@ -417,9 +456,9 @@ describe('En Passant', () => {
 
     it('should clear en passant square after the next move', () => {
         const engine = new Engine();
-        engine.move(0x14, 0x34); // e2-e4
-        engine.move(0x64, 0x54); // e7-e5
-        engine.move(0x34, 0x44); // e4-e5 (no longer a two-step)
+        engine.move(0x14, 0x34); // e4 (en passant square active)
+        engine.move(0x64, 0x54); // e6
+        engine.move(0x34, 0x44); // e5 (not a two-step)
         expect(rawBoard(engine).enPassantSquare).toBeNull();
     });
 
@@ -428,13 +467,30 @@ describe('En Passant', () => {
         // 1. e4  d5
         engine.move(0x14, 0x34); // e4
         engine.move(0x63, 0x43); // d5
-        // 2. exd5  e5  
+        // 2. exd5  e5
         engine.move(0x34, 0x43); // exd5
-        engine.move(0x64, 0x44); // e5 (black double-steps — sets en passant on e6)
-        // 3. dxe6 en passant
-        engine.move(0x43, 0x54); // e5 takes d6
+        engine.move(0x64, 0x44); // e5 (en passant square: 0x54)
+        // 3. dxe6 en passant: white pawn on d5 (0x43) captures on e6 (0x54)
+        engine.move(0x43, 0x54);
         expect(engine.getPiece(0x54)).toEqual({ type: PieceType.Pawn, color: Color.White });
         expect(engine.getPiece(0x44)).toBeNull(); // captured pawn removed
+    });
+
+    it('should correctly undo an en passant capture', () => {
+        const engine = new Engine();
+        // 1. e4 e5
+        engine.move(0x14, 0x34); // e4
+        engine.move(0x63, 0x43); // d5
+        // 2. exd5 e5
+        engine.move(0x34, 0x43); // exd5
+        engine.move(0x64, 0x44); // e5 (en passant square: 0x54)
+        // 3. dxe6
+        const record = engine.move(0x43, 0x54); // dxe6
+        engine.undoMove(record);
+        // After undo: white pawn back on d5, black pawn back on e5, e6 empty
+        expect(engine.getPiece(0x43)).toEqual({ type: PieceType.Pawn, color: Color.White });
+        expect(engine.getPiece(0x44)).toEqual({ type: PieceType.Pawn, color: Color.Black });
+        expect(engine.getPiece(0x54)).toBeNull();
     });
 });
 
@@ -445,18 +501,18 @@ describe('En Passant', () => {
 describe('Promotion', () => {
     it('should promote a white pawn to Queen by default', () => {
         const engine = new Engine();
-        place(engine, 0x60, PieceType.Pawn, Color.White); // a7
-        engine.move(0x60, 0x70, PieceType.Queen);
-        expect(engine.getPiece(0x70)?.type).toBe(PieceType.Queen);
-        expect(engine.getPiece(0x70)?.color).toBe(Color.White);
+        place(engine, 0x64, PieceType.Pawn, Color.White); // e7
+        engine.move(0x64, 0x74, PieceType.Queen);
+        expect(engine.getPiece(0x74)?.type).toBe(PieceType.Queen);
+        expect(engine.getPiece(0x74)?.color).toBe(Color.White);
     });
 
     it('should promote a white pawn to Knight', () => {
         const engine = new Engine();
-        place(engine, 0x60, PieceType.Pawn, Color.White); // a7
-        engine.move(0x60, 0x70, PieceType.Knight);
-        expect(engine.getPiece(0x70)?.type).toBe(PieceType.Knight);
-        expect(engine.getPiece(0x70)?.color).toBe(Color.White);
+        place(engine, 0x64, PieceType.Pawn, Color.White); // e7
+        engine.move(0x64, 0x74, PieceType.Knight);
+        expect(engine.getPiece(0x74)?.type).toBe(PieceType.Knight);
+        expect(engine.getPiece(0x74)?.color).toBe(Color.White);
     });
 
     it('should promote a black pawn to Queen on rank 0', () => {
@@ -485,7 +541,8 @@ describe('Castling', () => {
         const engine = new Engine();
         grid(engine).fill(null);
         grid(engine)[0x04] = { type: PieceType.King, color: Color.White }; // e1
-        engine.move(0x04, 0x14); // king steps forward (illegal in real chess, but tests rights)
+        grid(engine)[0x74] = { type: PieceType.King, color: Color.Black }; // e8
+        engine.move(0x04, 0x14);
         expect(rawBoard(engine).castlingRights.whiteKingSide).toBe(false);
         expect(rawBoard(engine).castlingRights.whiteQueenSide).toBe(false);
     });
@@ -494,6 +551,7 @@ describe('Castling', () => {
         const engine = new Engine();
         grid(engine).fill(null);
         grid(engine)[0x04] = { type: PieceType.King, color: Color.White };
+        grid(engine)[0x74] = { type: PieceType.King, color: Color.Black };
         grid(engine)[0x00] = { type: PieceType.Rook, color: Color.White }; // a1
         engine.move(0x00, 0x01);
         expect(rawBoard(engine).castlingRights.whiteQueenSide).toBe(false);
@@ -504,8 +562,9 @@ describe('Castling', () => {
         const engine = new Engine();
         grid(engine).fill(null);
         grid(engine)[0x04] = { type: PieceType.King, color: Color.White };
+        grid(engine)[0x74] = { type: PieceType.King, color: Color.Black };
         grid(engine)[0x07] = { type: PieceType.Rook, color: Color.White }; // h1
-        engine.move(0x07, 0x06); // rook moves
+        engine.move(0x07, 0x06);
         expect(rawBoard(engine).castlingRights.whiteKingSide).toBe(false);
         expect(rawBoard(engine).castlingRights.whiteQueenSide).toBe(true);
     });
@@ -513,8 +572,9 @@ describe('Castling', () => {
     it('should perform king-side castling: king to g1, rook to f1', () => {
         const engine = new Engine();
         grid(engine).fill(null);
-        grid(engine)[0x04] = { type: PieceType.King, color: Color.White }; // e1
-        grid(engine)[0x07] = { type: PieceType.Rook, color: Color.White }; // h1
+        grid(engine)[0x04] = { type: PieceType.King, color: Color.White };
+        grid(engine)[0x74] = { type: PieceType.King, color: Color.Black };
+        grid(engine)[0x07] = { type: PieceType.Rook, color: Color.White };
         engine.move(0x04, 0x06); // O-O
         expect(engine.getPiece(0x06)?.type).toBe(PieceType.King);
         expect(engine.getPiece(0x05)?.type).toBe(PieceType.Rook);
@@ -525,8 +585,9 @@ describe('Castling', () => {
     it('should perform queen-side castling: king to c1, rook to d1', () => {
         const engine = new Engine();
         grid(engine).fill(null);
-        grid(engine)[0x04] = { type: PieceType.King, color: Color.White }; // e1
-        grid(engine)[0x00] = { type: PieceType.Rook, color: Color.White }; // a1
+        grid(engine)[0x04] = { type: PieceType.King, color: Color.White };
+        grid(engine)[0x74] = { type: PieceType.King, color: Color.Black };
+        grid(engine)[0x00] = { type: PieceType.Rook, color: Color.White };
         engine.move(0x04, 0x02); // O-O-O
         expect(engine.getPiece(0x02)?.type).toBe(PieceType.King);
         expect(engine.getPiece(0x03)?.type).toBe(PieceType.Rook);
@@ -538,6 +599,7 @@ describe('Castling', () => {
         const engine = new Engine();
         grid(engine).fill(null);
         grid(engine)[0x04] = { type: PieceType.King, color: Color.White };
+        grid(engine)[0x74] = { type: PieceType.King, color: Color.Black };
         grid(engine)[0x07] = { type: PieceType.Rook, color: Color.White };
         grid(engine)[0x75] = { type: PieceType.Rook, color: Color.Black }; // attacks f1
         const moves = engine.getLegalMoves(0x04);
@@ -548,8 +610,9 @@ describe('Castling', () => {
         const engine = new Engine();
         grid(engine).fill(null);
         grid(engine)[0x04] = { type: PieceType.King, color: Color.White };
+        grid(engine)[0x74] = { type: PieceType.King, color: Color.Black };
         grid(engine)[0x07] = { type: PieceType.Rook, color: Color.White };
-        grid(engine)[0x74] = { type: PieceType.Rook, color: Color.Black }; // attacks e1 (king)
+        grid(engine)[0x64] = { type: PieceType.Rook, color: Color.Black }; // attacks e1
         const moves = engine.getLegalMoves(0x04);
         expect(moves).not.toContain(0x06);
     });
@@ -563,14 +626,13 @@ describe('Check and Legal Move Filtering', () => {
     it('should not allow a move that leaves the king in check', () => {
         const engine = new Engine();
         grid(engine).fill(null);
-        // King on e1, Black rook on e8 — any piece on e-file is pinned
         grid(engine)[0x04] = { type: PieceType.King, color: Color.White };
         grid(engine)[0x14] = { type: PieceType.Rook, color: Color.White }; // pinned on e2
         grid(engine)[0x74] = { type: PieceType.Rook, color: Color.Black }; // attacker on e8
         const moves = engine.getLegalMoves(0x14);
-        // The rook can only move along the e-file (stays between king and attacker)
+        // Pinned rook can only move along the e-file
         for (const move of moves) {
-            expect(move & 7).toBe(4); // all legal moves must stay on file e (file index 4)
+            expect(move & 7).toBe(4); // file e = index 4
         }
     });
 
@@ -606,8 +668,6 @@ describe('Check and Legal Move Filtering', () => {
 
     it('should detect stalemate', () => {
         const engine = new Engine();
-        // Manually construct a stalemate position:
-        // White King on b1, Black Queen on a3, Black King on d2
         grid(engine).fill(null);
         grid(engine)[0x01] = { type: PieceType.King,  color: Color.White }; // b1
         grid(engine)[0x20] = { type: PieceType.Queen, color: Color.Black }; // a3
@@ -695,6 +755,31 @@ describe('Move History and SAN Notation', () => {
         engine.move(0x04, 0x02);
         expect(engine.moveHistory[0]).toBe('O-O-O');
     });
+
+    it('should produce correct SAN with file disambiguation (two rooks, same rank target)', () => {
+        const engine = new Engine();
+        grid(engine).fill(null);
+        grid(engine)[0x04] = { type: PieceType.King, color: Color.White };
+        grid(engine)[0x74] = { type: PieceType.King, color: Color.Black };
+        grid(engine)[0x10] = { type: PieceType.Rook, color: Color.White }; // a2
+        grid(engine)[0x17] = { type: PieceType.Rook, color: Color.White }; // h2
+        // Both rooks can reach d2
+        // Move a2-rook to d2: should be "Rad2" not "Rd2"
+        engine.move(0x10, 0x13);
+        expect(engine.moveHistory[0]).toBe('Rad2');
+    });
+
+    it('should produce correct SAN with rank disambiguation (two rooks, same file target)', () => {
+        const engine = new Engine();
+        grid(engine).fill(null);
+        grid(engine)[0x04] = { type: PieceType.King, color: Color.White };
+        grid(engine)[0x74] = { type: PieceType.King, color: Color.Black };
+        grid(engine)[0x00] = { type: PieceType.Rook, color: Color.White }; // a1
+        grid(engine)[0x40] = { type: PieceType.Rook, color: Color.White }; // a5
+        // Both rooks on a-file; move a1-rook to a3 -> needs rank: "R1a3"
+        engine.move(0x00, 0x20);
+        expect(engine.moveHistory[0]).toBe('R1a3');
+    });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -715,7 +800,7 @@ describe('Undo Move', () => {
         const engine = new Engine();
         engine.move(0x14, 0x34); // e4
         engine.move(0x63, 0x43); // d5
-        const record = engine.move(0x34, 0x43); // exd5 (capture)
+        const record = engine.move(0x34, 0x43); // exd5
         engine.undoMove(record);
         expect(engine.getPiece(0x43)).toEqual({ type: PieceType.Pawn, color: Color.Black });
         expect(engine.getPiece(0x34)).toEqual({ type: PieceType.Pawn, color: Color.White });
@@ -725,6 +810,7 @@ describe('Undo Move', () => {
         const engine = new Engine();
         grid(engine).fill(null);
         grid(engine)[0x04] = { type: PieceType.King, color: Color.White };
+        grid(engine)[0x74] = { type: PieceType.King, color: Color.Black };
         grid(engine)[0x07] = { type: PieceType.Rook, color: Color.White };
         const record = engine.move(0x04, 0x06); // O-O
         engine.undoMove(record);
@@ -736,6 +822,8 @@ describe('Undo Move', () => {
     it('should restore a promoted pawn after undo', () => {
         const engine = new Engine();
         grid(engine).fill(null);
+        grid(engine)[0x04] = { type: PieceType.King, color: Color.White };
+        grid(engine)[0x74] = { type: PieceType.King, color: Color.Black };
         grid(engine)[0x60] = { type: PieceType.Pawn, color: Color.White };
         const record = engine.move(0x60, 0x70, PieceType.Queen);
         engine.undoMove(record);
@@ -777,7 +865,6 @@ describe('Dominion Mode', () => {
 
     it('getSquareControl() should return the occupying piece color for occupied squares', () => {
         const engine = new Engine(GameMode.Dominion);
-        // e1 has the White King at start
         expect(engine.getSquareControl(0x04)).toBe(Color.White);
     });
 
@@ -915,7 +1002,7 @@ describe('Draw — 50-Move Rule', () => {
         grid(engine).fill(null);
         grid(engine)[0x01] = { type: PieceType.King, color: Color.White };
         grid(engine)[0x71] = { type: PieceType.King, color: Color.Black };
-        engine.move(0x01, 0x02); // quiet king move
+        engine.move(0x01, 0x02);
         expect(rawBoard(engine).halfMoveClock).toBe(1);
     });
 
@@ -926,9 +1013,9 @@ describe('Draw — 50-Move Rule', () => {
         grid(engine)[0x01] = { type: PieceType.King, color: Color.White };
         grid(engine)[0x71] = { type: PieceType.King, color: Color.Black };
         grid(engine)[0x30] = { type: PieceType.Pawn, color: Color.White }; // a4
-        engine.move(0x01, 0x02); // clock → 1
-        engine.move(0x71, 0x72); // clock → 2
-        engine.move(0x30, 0x40); // pawn move — clock must reset to 0
+        engine.move(0x01, 0x02); // clock = 1
+        engine.move(0x71, 0x72); // clock = 2
+        engine.move(0x30, 0x40); // pawn move -> clock must reset to 0
         expect(rawBoard(engine).halfMoveClock).toBe(0);
     });
 
@@ -937,11 +1024,11 @@ describe('Draw — 50-Move Rule', () => {
         grid(engine).fill(null);
         grid(engine)[0x01] = { type: PieceType.King, color: Color.White };
         grid(engine)[0x71] = { type: PieceType.King, color: Color.Black };
-        grid(engine)[0x02] = { type: PieceType.Rook, color: Color.White }; // c1
-        grid(engine)[0x12] = { type: PieceType.Rook, color: Color.Black }; // c2 (target)
-        engine.move(0x02, 0x07); // quiet move → clock 1
-        engine.move(0x12, 0x17); // quiet move → clock 2
-        engine.move(0x07, 0x17); // capture → clock must reset to 0
+        grid(engine)[0x02] = { type: PieceType.Rook, color: Color.White };
+        grid(engine)[0x12] = { type: PieceType.Rook, color: Color.Black };
+        engine.move(0x02, 0x07); // clock = 1
+        engine.move(0x12, 0x17); // clock = 2
+        engine.move(0x07, 0x17); // capture -> clock = 0
         expect(rawBoard(engine).halfMoveClock).toBe(0);
     });
 
@@ -950,9 +1037,9 @@ describe('Draw — 50-Move Rule', () => {
         grid(engine).fill(null);
         grid(engine)[0x01] = { type: PieceType.King, color: Color.White };
         grid(engine)[0x71] = { type: PieceType.King, color: Color.Black };
-        engine.move(0x01, 0x02); // clock → 1
-        engine.move(0x71, 0x72); // clock → 2
-        const record = engine.move(0x02, 0x03); // clock → 3
+        engine.move(0x01, 0x02); // clock = 1
+        engine.move(0x71, 0x72); // clock = 2
+        const record = engine.move(0x02, 0x03); // clock = 3
         engine.undoMove(record);
         expect(rawBoard(engine).halfMoveClock).toBe(2);
     });
@@ -962,9 +1049,8 @@ describe('Draw — 50-Move Rule', () => {
         grid(engine).fill(null);
         grid(engine)[0x01] = { type: PieceType.King, color: Color.White };
         grid(engine)[0x71] = { type: PieceType.King, color: Color.Black };
-        // Directly set the clock to 99 to avoid running 100 actual moves
         rawBoard(engine).halfMoveClock = 99;
-        engine.move(0x01, 0x02); // 100th quiet half-move
+        engine.move(0x01, 0x02); // 100th half-move
         expect(engine.isFiftyMoveRule()).toBe(true);
     });
 
@@ -990,11 +1076,9 @@ describe('Draw — 50-Move Rule', () => {
 
     it('a pawn move should prevent the 50-move rule from triggering', () => {
         const engine = new Engine();
-        // Real game: move 49 pairs quietly, then a pawn move resets it
-        engine.move(0x14, 0x34); // e4 — pawn move, clock resets
-        // Manually push clock near limit
+        engine.move(0x14, 0x34); // e4
         rawBoard(engine).halfMoveClock = 98;
-        engine.move(0x64, 0x54); // e5 — another pawn move, clock resets again
+        engine.move(0x64, 0x54); // e5: pawn move -> resets clock
         expect(engine.isFiftyMoveRule()).toBe(false);
         expect(rawBoard(engine).halfMoveClock).toBe(0);
     });
@@ -1004,8 +1088,7 @@ describe('Draw — 50-Move Rule', () => {
 
 describe('Draw — Insufficient Material', () => {
     it('isInsufficientMaterial() should be false at the start', () => {
-        const engine = new Engine();
-        expect(engine.isInsufficientMaterial()).toBe(false);
+        expect(new Engine().isInsufficientMaterial()).toBe(false);
     });
 
     it('K vs K is insufficient material', () => {
@@ -1038,9 +1121,9 @@ describe('Draw — Insufficient Material', () => {
         const engine = new Engine();
         grid(engine).fill(null);
         grid(engine)[0x04] = { type: PieceType.King,   color: Color.White };
-        grid(engine)[0x00] = { type: PieceType.Bishop, color: Color.White }; // a1 — dark square
+        grid(engine)[0x00] = { type: PieceType.Bishop, color: Color.White }; // a1 -> dark square
         grid(engine)[0x74] = { type: PieceType.King,   color: Color.Black };
-        grid(engine)[0x22] = { type: PieceType.Bishop, color: Color.Black }; // c3 — dark square
+        grid(engine)[0x22] = { type: PieceType.Bishop, color: Color.Black }; // c3 -> dark square
         expect(engine.isInsufficientMaterial()).toBe(true);
     });
 
@@ -1048,9 +1131,9 @@ describe('Draw — Insufficient Material', () => {
         const engine = new Engine();
         grid(engine).fill(null);
         grid(engine)[0x04] = { type: PieceType.King,   color: Color.White };
-        grid(engine)[0x00] = { type: PieceType.Bishop, color: Color.White }; // a1 — dark square
+        grid(engine)[0x00] = { type: PieceType.Bishop, color: Color.White }; // a1 -> dark square
         grid(engine)[0x74] = { type: PieceType.King,   color: Color.Black };
-        grid(engine)[0x10] = { type: PieceType.Bishop, color: Color.Black }; // a2 — light square
+        grid(engine)[0x10] = { type: PieceType.Bishop, color: Color.Black }; // a2 -> light square
         expect(engine.isInsufficientMaterial()).toBe(false);
     });
 
@@ -1081,7 +1164,7 @@ describe('Draw — Insufficient Material', () => {
         expect(engine.isInsufficientMaterial()).toBe(false);
     });
 
-    it('K+N+N vs K is NOT flagged as insufficient (mates are theoretically possible)', () => {
+    it('K+N+N vs K is NOT flagged as insufficient', () => {
         const engine = new Engine();
         grid(engine).fill(null);
         grid(engine)[0x04] = { type: PieceType.King,   color: Color.White };
@@ -1112,31 +1195,121 @@ describe('Draw — Insufficient Material', () => {
 
 describe('getDrawReason()', () => {
     it('should return null when the game is ongoing', () => {
-        const engine = new Engine();
-        expect(engine.getDrawReason()).toBeNull();
+        expect(new Engine().getDrawReason()).toBeNull();
     });
 
     it('should return "stalemate" for a stalemate position', () => {
         const engine = new Engine();
-        // White King b1, Black Queen a3, Black King d2 — White is stalemated
+        // White King b1, Black Queen a3, Black King d2 -> White is stalemated
         grid(engine).fill(null);
-        grid(engine)[0x01] = { type: PieceType.King,  color: Color.White };
-        grid(engine)[0x20] = { type: PieceType.Queen, color: Color.Black };
-        grid(engine)[0x13] = { type: PieceType.King,  color: Color.Black };
+        grid(engine)[0x01] = { type: PieceType.King,  color: Color.White }; // b1
+        grid(engine)[0x20] = { type: PieceType.Queen, color: Color.Black }; // a3
+        grid(engine)[0x13] = { type: PieceType.King,  color: Color.Black }; // d2
         expect(engine.getDrawReason()).toBe('stalemate');
     });
 
     it('should return null (not draw) for checkmate', () => {
         const engine = new Engine();
-        // 1. e4 e5 2. Bc4 Nc6 3. Qh5 Nf6 4. Qxf7#
         engine.move(0x14, 0x34);
         engine.move(0x64, 0x44);
         engine.move(0x05, 0x32);
         engine.move(0x71, 0x52);
         engine.move(0x03, 0x47);
         engine.move(0x76, 0x55);
-        engine.move(0x47, 0x65);
-        // Game is over but by checkmate, not a draw
+        engine.move(0x47, 0x65); // Qxf7#
         expect(engine.getDrawReason()).toBeNull();
+    });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Analyzer (Analysis Mode)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('Analyzer — analyseSquare()', () => {
+    it('should return an annotation for every legal move', () => {
+        const engine = new Engine();
+        // e2 pawn has 2 legal moves at start
+        const annotations = analyseSquare(rawBoard(engine), 0x14);
+        expect(annotations.length).toBe(2);
+        expect(annotations.map(a => a.to)).toContain(0x24); // e3
+        expect(annotations.map(a => a.to)).toContain(0x34); // e4
+    });
+
+    it('should return [] for an empty square', () => {
+        const engine = new Engine();
+        expect(analyseSquare(rawBoard(engine), 0x33)).toEqual([]);
+    });
+
+    it('should return [] for an opponent\'s piece (not your turn)', () => {
+        const engine = new Engine();
+        // Black pieces on rank 6/7, but it is White's turn
+        expect(analyseSquare(rawBoard(engine), 0x64)).toEqual([]);
+    });
+
+    it('should not mutate the board (all moves are undone)', () => {
+        const engine = new Engine();
+        const before = JSON.stringify(rawBoard(engine).grid);
+        analyseSquare(rawBoard(engine), 0x14);
+        const after = JSON.stringify(rawBoard(engine).grid);
+        expect(after).toBe(before);
+    });
+
+    it('scoreDelta should be positive when capturing an undefended piece', () => {
+        const engine = new Engine();
+        grid(engine).fill(null);
+        grid(engine)[0x04] = { type: PieceType.King,   color: Color.White };
+        grid(engine)[0x74] = { type: PieceType.King,   color: Color.Black };
+        // White rook on a1 can capture undefended black pawn on a5
+        grid(engine)[0x00] = { type: PieceType.Rook, color: Color.White };
+        grid(engine)[0x40] = { type: PieceType.Pawn, color: Color.Black }; // undefended
+        const annotations = analyseSquare(rawBoard(engine), 0x00);
+        const capture = annotations.find(a => a.to === 0x40);
+        expect(capture).toBeDefined();
+        expect(capture!.scoreDelta).toBe(100); // pawn value
+    });
+
+    it('scoreDelta should be negative when moving a piece en prise with no recapture', () => {
+        const engine = new Engine();
+        grid(engine).fill(null);
+        grid(engine)[0x04] = { type: PieceType.King,   color: Color.White };
+        grid(engine)[0x74] = { type: PieceType.King,   color: Color.Black };
+        // White queen on d1, black rook on d8 (controls d-file). Moving queen to d5 loses it.
+        grid(engine)[0x03] = { type: PieceType.Queen, color: Color.White };
+        grid(engine)[0x73] = { type: PieceType.Rook,  color: Color.Black }; // defends d-file
+        const annotations = analyseSquare(rawBoard(engine), 0x03);
+        const blunderMove = annotations.find(a => a.to === 0x43); // d5 — attacked by rook
+        expect(blunderMove).toBeDefined();
+        expect(blunderMove!.scoreDelta).toBeLessThan(0);
+    });
+
+    it('mateIn should be 1 when the move delivers immediate checkmate', () => {
+        const engine = new Engine();
+        // Scholar's mate: after 1.e4 e5 2.Bc4 Nc6 3.Qh5 Nf6, Qxf7# is available
+        engine.move(0x14, 0x34);
+        engine.move(0x64, 0x44);
+        engine.move(0x05, 0x32);
+        engine.move(0x71, 0x52);
+        engine.move(0x03, 0x47);
+        engine.move(0x76, 0x55);
+        // Now it is White's turn. Queen on h5 (0x47) can deliver Qxf7# (0x65)
+        const annotations = analyseSquare(rawBoard(engine), 0x47);
+        const matingMove = annotations.find(a => a.to === 0x65);
+        expect(matingMove).toBeDefined();
+        expect(matingMove!.mateIn).toBe(1);
+    });
+
+    it('mateIn should be null for plain developing moves', () => {
+        const engine = new Engine();
+        const annotations = analyseSquare(rawBoard(engine), 0x14); // e2 pawn
+        for (const ann of annotations) {
+            expect(ann.mateIn).toBeNull();
+        }
+    });
+
+    it('should leave board.turn unchanged after analysis', () => {
+        const engine = new Engine();
+        const turnBefore = rawBoard(engine).turn;
+        analyseSquare(rawBoard(engine), 0x14);
+        expect(rawBoard(engine).turn).toBe(turnBefore);
     });
 });

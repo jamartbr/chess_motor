@@ -102,33 +102,29 @@ function decorateCheck(board: Board, moverColor: Color, san: string): string {
 /**
  * Returns the 0x88 indices of all OTHER pieces of the same type and color
  * as the piece at `from` that can also legally reach `to`.
- * Called after makeMove has been applied, so we reconstruct from the record.
- *
- * Note: `board` is in the POST-move state when buildSAN is called.
- * We need pre-move legal moves, so we pass `from`, `to`, and `piece`
- * (which describe the move that was just made) and re-derive from there.
+ * Called after makeMove has been applied.
  */
 function findAmbiguousPieces(board: Board, from: number, to: number, piece: Piece): number[] {
     const ambiguous: number[] = [];
+    
+    // Temporarily remove the moved piece from `to` to check if other pieces could reach it
+    const movedPiece = board.grid[to];
+    board.grid[to] = null;
+    
     for (let i = 0; i < 128; i++) {
-        if (i === from) continue;                    // skip the piece that just moved
         if (!board.isOnBoard(i)) continue;
         const p = board.grid[i];
         if (!p || p.type !== piece.type || p.color !== piece.color) continue;
-        // Check if this piece could also reach `to` — but the board is post-move,
-        // so `from` is empty and `to` has our piece. Temporarily restore original
-        // state to get accurate legal moves for the sibling piece.
-        const savedFrom = board.grid[from];
-        const savedTo   = board.grid[to];
-        board.grid[from] = piece;                    // restore moving piece to origin
-        board.grid[to]   = savedTo?.color === piece.color ? savedTo : null; // clear if we put ours there
-        // Flip turn back so legalMoves accepts our color
-        board.turn = board.enemy(board.turn);
+        
+        // Check if this piece can legally move to `to`
         const moves = legalMoves(board, i);
-        board.turn = board.enemy(board.turn);        // restore turn
-        board.grid[from] = savedFrom;
-        board.grid[to]   = savedTo;
-        if (moves.includes(to)) ambiguous.push(i);
+        if (moves.some(m => m === to)) {
+            ambiguous.push(i);
+        }
     }
+    
+    // Restore the moved piece
+    board.grid[to] = movedPiece;
+    
     return ambiguous;
 }
