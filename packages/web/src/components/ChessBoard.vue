@@ -277,7 +277,7 @@ if (props.socket) {
         <div
           :key="moveKey"
           class="grid grid-cols-8 aspect-square border-[12px] border-slate-700 bg-slate-800 shadow-2xl"
-          :style="{ width: `${8 * 65 + 24}px` }"
+          :style="{ width: `${8 * 70}px` }"
         >
           <Square
             v-for="index in boardIndices"
